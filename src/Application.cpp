@@ -3,28 +3,42 @@
 #include <string>
 #include <sstream>
 
+#include <glm.hpp>
+#include <gtc/matrix_transform.hpp>
+
 #include "MyWindow.h"
 #include "Contrals.h"
 #include "Models.h"
+#include "LoadingModelsFormJSON.h"
+#include "RandomDevice.h"
 
 #include "renderComponents/Renderer.h"
 #include "renderComponents/ShaderProgram.h"
 #include "renderComponents/Texture.h"
 
+#include "collisionSystem/PhysicWorld.h"
+
 #include "vendor/stb_image/stb_image.h"
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw_gl3.h"
-#include "glm.hpp"
-#include "gtc/matrix_transform.hpp"
 
 #include "tests/TestMenu.h"
 #include "tests/TestScene.h"
 int main(void)
 {
+	RandomDevice randomDevice;
 	int Width = 1920, Height = 1080;
     {
 		MyWindow window(Width, Height, "Hello World");
 		window.SetClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+
+		PhysicWorld physicWorld;
+		physicWorld.SetGravity(cpv(0.0f, 8.0f));
+        physicWorld.SetBoundaryLine(cpv(-10.0f, 0.0f), cpv((float)Width + 10.0f, 0.0f));
+        physicWorld.SetBoundaryLine(cpv(0.0f, -10.0f), cpv(0.0f, (float)Height + 10.0f));
+        physicWorld.SetBoundaryLine(cpv((float)Width, (float)Height + 10.0f), cpv((float)Width, -10.0f));
+        physicWorld.SetBoundaryLine(cpv((float)Width + 10.0f, (float)Height), cpv(-10.0f, (float)Height));
+
 		Contrals Ctrl;
 
 		Ctrl.SetSceneSize((float)Width, (float)Height);
@@ -45,37 +59,28 @@ int main(void)
         shader.SetUniform1iv("u_Textures", 2, l);
         shader.SetUniformBlock("u_TransForm", 0);
 
-        float picWidth = 100.0f;
-        Vertexs2D vertexs[4] = {
-            { { 0.0f, 0.0f },{ 1.0f, 1.0f, 0.9f, 1.0f },{ 0.0f, 0.0f }, 0.0f },
-            { { picWidth, 0.0f },{ 1.0f, 1.0f, 0.9f, 1.0f },{ 1.0f, 0.0f }, 0.0f },
-            { { 0.0f, picWidth },{ 1.0f, 1.0f, 0.9f, 1.0f },{ 0.0f, 1.0f }, 0.0f },
-            { { picWidth, picWidth },{ 1.0f, 1.0f, 0.9f, 1.0f },{ 1.0f, 1.0f }, 0.0f }
-        };
-        uint32_t indices[6] = {
-            0, 1, 2,
-            3, 2, 1
-		};
         VertexBufferLayout layout;
 		layout.Push<float>(2, GL_FALSE);
 		layout.Push<float>(4, GL_FALSE);
 		layout.Push<float>(2, GL_FALSE);
 		layout.Push<float>(1, GL_FALSE);
-        Models models[9] = {
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-            Models(vertexs, indices, &layout, 4, 6, &shader),
-			Models(vertexs, indices, &layout, 4, 6, &shader)
-        };
+		std::vector<Models*> modelsSource = std::vector<Models*>();
+        {
+            Models* m;
+            LoadModelsFromJson("res/models/models.json", "stars", &layout, &shader, m);
+			modelsSource.push_back(m);
+        }
+		std::vector<Models*> models = std::vector<Models*>();
+		for (int i = 0; i < 9; i++)
+        {
+            models.push_back(new Models(*modelsSource[0], &layout));
+        }
         for (int i = 0; i < 3; i++)
         {
-            for (int j = 0; j < 3; j++) {
-                models[i * 3 + j].MoveTo((float)(i * (picWidth + 10)), (float)(j * (picWidth + 10)));
+            for (int j = 0; j < 3; j++)
+            {
+                models[i * 3 + j]->MoveTo((float)(i+1) * (200.f) + randomDevice.Float(-30, 30), (float)(j + 0) * 200.f + randomDevice.Float(-30, 30));
+				physicWorld.AddCircle(*models[i * 3 + j]);
             }
         }
 
@@ -102,7 +107,7 @@ int main(void)
             ImGui_ImplGlfwGL3_NewFrame();
             if (currentTest) {
                 ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-                currentTest->OnUpdate(&models[0], 0.0f);
+                currentTest->OnUpdate(&models, 0.0f);
                 currentTest->OnRender();
                 currentTest->OnImGuiRender();
                 if (currentTest != testMenu && ImGui::Button("<-")) {
@@ -110,9 +115,11 @@ int main(void)
                     currentTest = testMenu;
                 }
             }
+			physicWorld.Step(0.05);
             for (auto& m : models)
             {
-                m.Draw(&renderer);
+				m->UpdatePhysicFromModel();
+                m->Draw(&renderer);
             }
 
             ImGui::Render();

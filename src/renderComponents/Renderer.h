@@ -9,6 +9,7 @@
 #include "IndexBuffer.h"
 #include "UniformBuffer.h"
 #include "ShaderProgram.h"
+#include "../Macros.h"
 
 #define ASSERT(x) if (!(x)) __debugbreak();
 #define GLCall(x) GLClearError();\
@@ -24,4 +25,6 @@ public:
 	Renderer();
 	void Clear(glm::vec4 color) const;
 	void Draw(const VertexArray& vao, const IndexBuffer& ibo, const UniformBuffer& ubo, const ShaderProgram& shader, uint32_t DrawMode = GL_TRIANGLES) const;
+private:
+	inline void Only2D() const;
 };

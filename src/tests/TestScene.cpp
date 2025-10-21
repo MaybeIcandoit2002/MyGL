@@ -7,8 +7,12 @@ namespace test {
 	}
     void TestScene::OnUpdate(const void* p, float deltaTime)
     {
-        Models* models = (Models*)p;
-		ImGui::Text("models position x: %.2f, y: %.2f", models->GetPosition().matRT[2][0], models->GetPosition().matRT[2][1]);
+        std::vector<Models*>* models = (std::vector<Models*>*)p;
+        for (int i = 0; i < 9; i++)
+        {
+			ImGui::Text("Model %d Position: (%.2f, %.2f)", i, (*models)[i]->GetPose()[0], (*models)[i]->GetPose()[1]);
+			ImGui::Text("Model %d Physic Position: (%.2f, %.2f)", i, cpBodyGetPosition((*models)[i]->GetPhysicBody()).x, cpBodyGetPosition((*models)[i]->GetPhysicBody()).y);
+		}
     }
     void TestScene::OnRender()
     {

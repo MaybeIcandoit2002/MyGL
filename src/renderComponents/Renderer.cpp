@@ -20,14 +20,17 @@ bool GLLogCall(const char* function, const char* file, int line) {
 
 Renderer::Renderer()
 {
-    GLCall(glEnable(GL_BLEND));
-    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
+    Only2D();
 
+}
+
+void SetClearColor(glm::vec4 color)
+{
+    glClearColor(color.r, color.g, color.b, color.a);
 }
 
 void Renderer::Clear(glm::vec4 color) const
 {
-	glClearColor(color.r, color.g, color.b, color.a);
     GLCall(glClear(GL_COLOR_BUFFER_BIT));
 }
 
@@ -38,4 +41,13 @@ void Renderer::Draw(const VertexArray& vao, const IndexBuffer& ibo, const Unifor
 	ubo.Bind();
 	shader.Bind();
     GLCall(glDrawElements(GL_TRIANGLES, ibo.GetCount(), GL_UNSIGNED_INT, nullptr));
+}
+
+void Renderer::Only2D() const
+{
+	GLCall(glDisable(GL_DEPTH_TEST));
+	GLCall(glDisable(GL_CULL_FACE));
+
+    GLCall(glEnable(GL_BLEND));
+    GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 }
