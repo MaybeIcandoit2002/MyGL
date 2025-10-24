@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../vendor/stb_image/stb_image.h"
 Texture::Texture(const std::string& path)
-	: filePath(path), localBuffer(nullptr), width(0), height(0), BPP(0)
+	: filePath(path)
 {
 	localBuffer = stbi_load(path.c_str(), &width, &height, &BPP, 4);
 	GLCall(glGenTextures(1, &id));

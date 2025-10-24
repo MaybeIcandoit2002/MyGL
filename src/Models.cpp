@@ -1,7 +1,7 @@
 #include "Models.h"
 #include "Macros.h"
 
-Models::Models(Models& model, const VertexBufferLayout* layout)
+Models::Models(Models& model, Contrals* ctrl)
 	: vertexs(model.vertexs), indices(model.indices), 
 	vertexCount(model.vertexCount), indexCount(model.indexCount), 
 	shader(model.shader), 
@@ -17,30 +17,17 @@ Models::Models(Models& model, const VertexBufferLayout* layout)
 	DEBUG_PRINT("copy model(v_id): " << objectSkeleton);
 }
 
-Models::Models(const Vertexs2D* vertexs, const uint32_t* indices, 
-	const VertexBufferLayout* layout, uint32_t vertexCount, uint32_t indexCount, const ShaderProgram* shader)
-	: vertexs(new Vertexs2D[vertexCount]), indices(new uint32_t[indexCount]),
-	vertexCount(vertexCount), indexCount(indexCount), 
-	shader(shader), 
-	isPhysicObject(false), physicProperties(new float[4]),
+Models::Models(Contrals* ctrl)
+	: ctrl(ctrl),
+	isPhysicObject(false),
+	physicProperties(std::make_shared<float[]>(4)),
 	pose { 0.0f, 0.0f, 0.0f, 1.0f },
-	objectSkeleton(nullptr),
-	objectSkeletonShap(nullptr),
-	objectSkeletonIndecies(nullptr),
-	objectPosition(nullptr),
 	physicBody(nullptr)
 {
-	std::copy(vertexs, vertexs + vertexCount, this->vertexs.get());
-	std::copy(indices, indices + indexCount, this->indices.get());
 }
 
 Models::~Models()
 {
-	if (objectSkeleton)	delete objectSkeleton;
-	if (objectSkeletonShap)	delete objectSkeletonShap;
-	if (objectSkeletonIndecies)	delete objectSkeletonIndecies;
-	if (objectPosition)	delete objectPosition;
-	DEBUG_PRINT("destruction model(v_id): " << objectSkeleton);
 }
 
 void Models::SetPose(float x, float y, float angle, float scale)
@@ -51,18 +38,18 @@ void Models::SetPose(float x, float y, float angle, float scale)
 	pose[3] = scale;
 }
 
-void Models::SetPhysicProperties(bool isPhysicObject)
+void Models::SetPhysicPropertiesOff()
 {
-	this->isPhysicObject = isPhysicObject;
+	this->isPhysicObject = false;
 }
 
 void Models::SetPhysicProperties(const float* physicProperties)
 {
-	this->isPhysicObject = true;
 	this->physicProperties[0] = physicProperties[0] * this->pose[3];
 	this->physicProperties[1] = physicProperties[1] * this->pose[3];
 	this->physicProperties[2] = physicProperties[2] * this->pose[3];
 	this->physicProperties[3] = physicProperties[3];
+	this->isPhysicObject = true;
 }
 
 void Models::MoveTo(float x, float y)

@@ -79,7 +79,7 @@ int main(void)
         {
             for (int j = 0; j < 3; j++)
             {
-                models[i * 3 + j]->MoveTo((float)(i+1) * (200.f) + randomDevice.Float(-30, 30), (float)(j + 0) * 200.f + randomDevice.Float(-30, 30));
+                models[i * 3 + j]->MoveTo((float)(i+1) * (200.f) + randomDevice.Float(-10, 10), (float)(j + 1) * 200.f + randomDevice.Float(-10, 10));
 				physicWorld.AddCircle(*models[i * 3 + j]);
             }
         }

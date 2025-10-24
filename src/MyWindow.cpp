@@ -2,7 +2,7 @@
 #include <stdexcept>
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: width(width), height(height), clearColor(0.0f, 0.0f, 0.0f, 1.0f)
+	: render(new Renderer()), windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -20,11 +20,25 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	glfwSwapInterval(1);
 	if (glewInit() != GLEW_OK)
 		throw std::runtime_error("Failed to initialize GLEW");
+	render->InitializeShader({
+		{ GL_VERTEX_SHADER, "res/shaders/Vertex.shader" },
+		{ GL_FRAGMENT_SHADER, "res/shaders/Fragment.shader" }
+		});
 }
 
 MyWindow::~MyWindow()
 {
 	glfwTerminate();
+}
+
+void MyWindow::AddPicture(const std::string imagePath, uint32_t slot)
+{
+	pictures.push_back({ slot, imagePath });
+	render->InitializeTextures(pictures);
+}
+
+void MyWindow::AddModels(Models model)
+{
 }
 
 bool MyWindow::ShouldClose() const
