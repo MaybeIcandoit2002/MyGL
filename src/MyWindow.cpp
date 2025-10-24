@@ -1,8 +1,9 @@
 #include "MyWindow.h"
 #include <stdexcept>
+#include "gtc/matrix_transform.hpp"
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: render(new Renderer()), windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f)
+	: windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), physicWorld(new PhysicWorld())
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -20,10 +21,14 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	glfwSwapInterval(1);
 	if (glewInit() != GLEW_OK)
 		throw std::runtime_error("Failed to initialize GLEW");
+	render = new Renderer();
 	render->InitializeShader({
 		{ GL_VERTEX_SHADER, "res/shaders/Vertex.shader" },
 		{ GL_FRAGMENT_SHADER, "res/shaders/Fragment.shader" }
 		});
+	render->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f));
+	render->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
+	render->GetShader()->SetUniformBlock("u_TransForm", 0);
 }
 
 MyWindow::~MyWindow()
@@ -31,33 +36,28 @@ MyWindow::~MyWindow()
 	glfwTerminate();
 }
 
-void MyWindow::AddPicture(const std::string imagePath, uint32_t slot)
-{
-	pictures.push_back({ slot, imagePath });
-	render->InitializeTextures(pictures);
-}
-
-void MyWindow::AddModels(Models model)
-{
-}
-
-bool MyWindow::ShouldClose() const
-{
-	bool shouldClose = glfwWindowShouldClose(window);
-	if (!shouldClose) {
-		glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
-		glClear(GL_COLOR_BUFFER_BIT);
-	}
-	return shouldClose;
-}
-
-void MyWindow::End() const
-{
-	glfwSwapBuffers(window);
-	glfwPollEvents();
-}
-
 void MyWindow::SetClearColor(float r, float g, float b, float a)
 {
 	clearColor = glm::vec4(r, g, b, a);
+	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
+}
+
+bool MyWindow::Loop()
+{
+	bool run = !glfwWindowShouldClose(window);
+	if (run) {
+		glClear(GL_COLOR_BUFFER_BIT);
+		Update();
+	}
+	return run;
+}
+
+void MyWindow::Update()
+{
+	for (auto& model : models)
+	{
+		model->Update();
+		model->Draw();
+	}
+
 }

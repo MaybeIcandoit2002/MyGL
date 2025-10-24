@@ -1,0 +1,1 @@
+D:\CodeSpaces\vendor\Chipmunk2D-master\msvc\VS2015\chipmunk\Win32\Debug SCRT\chipmunk.lib

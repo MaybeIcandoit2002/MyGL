@@ -1,4 +1,5 @@
 #include "PhysicWorld.h"
+#include "../Models.h"
 
 PhysicWorld::PhysicWorld()
 {
@@ -32,44 +33,47 @@ void PhysicWorld::Step(double dt)
     cpSpaceStep(m_space, dt);
 }
 
-void PhysicWorld::AddCircle(Models& model)
+void PhysicWorld::AddCircle(Models* model)
 {
-    float* pose = model.GetPose();
-	float* physicProps = model.GetPhysicProperties();
-    float x = pose[0] + physicProps[0];
-    float y = pose[1] + physicProps[1];
-    float radius = physicProps[2] / 2;
-	float mass = physicProps[3];
-
-    // 计算转动惯量
-    cpFloat moment = cpMomentForCircle(mass, 0, radius, cpvzero);
-
-    // 创建刚体
-    cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
-    cpBodySetPosition(body, cpv(x, y));
-
-    // 创建圆形shape
-    cpShape* shape = cpSpaceAddShape(m_space, cpCircleShapeNew(body, radius, cpvzero));
-    cpShapeSetFriction(shape, 0.7f);
-    cpShapeSetElasticity(shape, 0.8f);
-
-    // 可选：设置碰撞类型、用户数据等
-    // cpShapeSetCollisionType(shape, 1);
-    // cpShapeSetUserData(shape, ...);
-
-	model.SetPhysicBody(body);
+    std::vector<ModelsPose> pose = model->GetPoses();
+    std::vector<ModelsPhysicProperties> physicProps = model->GetPhysicProperties();
+    std::vector<cpBody*> vecBody = model->GetPhysicBody();
+    std::vector<cpShape*> vecShape = model->GetPhysicShape();
+	uint32_t count = model->GetModelCount();
+    for (uint32_t i = 0; i < count; i++)
+    {
+		float mass = physicProps[i].mass;
+		float radius = physicProps[i].shape1;
+        cpFloat moment = cpMomentForCircle(mass, 0, radius, cpvzero);
+        cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
+        cpBodySetPosition(body, cpv(pose[i].x, pose[i].y));
+        cpShape* shape = cpSpaceAddShape(m_space, cpCircleShapeNew(body, radius, cpvzero));
+        cpShapeSetFriction(shape, physicProps[i].friction);
+        cpShapeSetElasticity(shape, physicProps[i].elasticity);
+		vecBody[i] = body;
+		vecShape[i] = shape;
+    }
 }
 
-// 可选：添加矩形物体
-/*
-cpBody* PhysicWorld::AddBox(float x, float y, float width, float height, float mass)
+void PhysicWorld::AddBox(Models* model)
 {
-    float moment = cpMomentForBox(mass, width, height);
-    cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
-    cpBodySetPosition(body, cpv(x, y));
-    cpShape* shape = cpSpaceAddShape(m_space, cpBoxShapeNew(body, width, height, 0));
-    cpShapeSetFriction(shape, 0.7f);
-    cpShapeSetElasticity(shape, 0.8f);
-    return body;
+    std::vector<ModelsPose> pose = model->GetPoses();
+    std::vector<ModelsPhysicProperties> physicProps = model->GetPhysicProperties();
+    std::vector<cpBody*> vecBody = model->GetPhysicBody();
+    std::vector<cpShape*> vecShape = model->GetPhysicShape();
+    uint32_t count = model->GetModelCount();
+    for (uint32_t i = 0; i < count; i++)
+    {
+        float mass = physicProps[i].mass;
+		float width = physicProps[i].shape1;
+		float height = physicProps[i].shape2;
+        float moment = cpMomentForBox(mass, width, height);
+        cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
+        cpBodySetPosition(body, cpv(pose[i].x, pose[i].y));
+        cpShape* shape = cpSpaceAddShape(m_space, cpBoxShapeNew(body, width, height, 0));
+        cpShapeSetFriction(shape, physicProps[i].friction);
+        cpShapeSetElasticity(shape, physicProps[i].elasticity);
+        vecBody[i] = body;
+        vecShape[i] = shape;
+    }
 }
-*/

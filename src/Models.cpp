@@ -1,103 +1,113 @@
 #include "Models.h"
 #include "Macros.h"
+#include "MyWindow.h"
 
-Models::Models(Models& model, Contrals* ctrl)
-	: vertexs(model.vertexs), indices(model.indices), 
-	vertexCount(model.vertexCount), indexCount(model.indexCount), 
-	shader(model.shader), 
-	isPhysicObject(model.isPhysicObject), 
-	physicProperties(model.physicProperties),
-	pose { model.pose[0], model.pose[1], model.pose[2], model.pose[3] },
-	physicBody(nullptr)
+Models::Models(Models& model, MyWindow* window)
+	: window(window)
+	, isPhysicObject(model.isPhysicObject)
+	, count(1)
+	, vertexs(model.vertexs), indices(model.indices)
+	, physicProperties(model.physicProperties), poses(model.poses)
+	, objectTransformBuffer(nullptr)
 {
-	objectSkeleton = new VertexBuffer(vertexs.get(), vertexCount * sizeof(Vertexs2D));
-	objectSkeletonShap = new VertexArray(*objectSkeleton, *layout);
-	objectSkeletonIndecies = new IndexBuffer(indices.get(), indexCount);
-	objectPosition = new UniformBuffer(0, 6 * sizeof(glm::vec4));
-	DEBUG_PRINT("copy model(v_id): " << objectSkeleton);
+	window->AddModel(this);
 }
 
-Models::Models(Contrals* ctrl)
-	: ctrl(ctrl),
-	isPhysicObject(false),
-	physicProperties(std::make_shared<float[]>(4)),
-	pose { 0.0f, 0.0f, 0.0f, 1.0f },
-	physicBody(nullptr)
+Models::Models(MyWindow* window)
+	: window(window), isPhysicObject(false)
+	, count(1)
+	, objectTransformBuffer(nullptr)
 {
+	window->AddModel(this);
 }
 
 Models::~Models()
 {
-}
-
-void Models::SetPose(float x, float y, float angle, float scale)
-{
-	pose[0] = x;
-	pose[1] = y;
-	pose[2] = angle;
-	pose[3] = scale;
-}
-
-void Models::SetPhysicPropertiesOff()
-{
-	this->isPhysicObject = false;
-}
-
-void Models::SetPhysicProperties(const float* physicProperties)
-{
-	this->physicProperties[0] = physicProperties[0] * this->pose[3];
-	this->physicProperties[1] = physicProperties[1] * this->pose[3];
-	this->physicProperties[2] = physicProperties[2] * this->pose[3];
-	this->physicProperties[3] = physicProperties[3];
-	this->isPhysicObject = true;
-}
-
-void Models::MoveTo(float x, float y)
-{
-	pose[0] = x; pose[1] = y;
-}
-
-void Models::SetRotation(float angle)
-{
-	pose[2] = angle;
-}
-
-void Models::SetScale(float scale)
-{
-	pose[3] = scale;
-}
-
-void Models::Draw(Renderer* render) const
-{
-	TransForms2D tf;
-	GetTransForms2D(tf);
-	objectPosition->SetData(&tf, sizeof(TransForms2D), 0);
-	render->Draw(*objectSkeletonShap, *objectSkeletonIndecies, *objectPosition, *shader);
-}
-
-void Models::GetTransForms2D(TransForms2D& tf) const
-{
-	tf.matScale = glm::mat3x4(
-		pose[3], 0.0f, 0.0f, 0.0f,
-		0.0f, pose[3], 0.0f, 0.0f,
-		0.0f, 0.0f, 1.0f, 0.0f
-	);
-	float cosA = cosf(pose[2]);
-	float sinA = sinf(pose[2]);
-	tf.matRT = glm::mat3x4(
-		cosA, sinA, 0.0f, 0.0f,
-		-sinA, cosA, 0.0f, 0.0f,
-		pose[0], pose[1], 1.0f, 0.0f
-	);
-}
-
-void Models::UpdatePhysicFromModel()
-{
-	if (isPhysicObject)
+	if (objectTransformBuffer)
 	{
-		cpVect pos = cpBodyGetPosition(physicBody);
-		pose[0] = pos.x - physicProperties[0];
-		pose[1] = pos.y - physicProperties[1];
-		pose[2] = cpBodyGetAngle(physicBody);
+		delete objectTransformBuffer;
 	}
+}
+
+void Models::InitializeModelData(std::vector<Vertexs2D>& vertexs, std::vector<uint32_t>& indices)
+{
+	this->vertexs = vertexs;
+	this->indices = indices;
+	renderIndex = window->GetRenderer()->AddData(this->vertexs.data(), (uint32_t)this->vertexs.size(), this->indices.data(), (uint32_t)this->indices.size());
+}
+
+void Models::SetModelCount(uint32_t count)
+{
+	if (objectTransformBuffer) return;
+	this->count = count;
+	this->physicProperties.resize(count);
+	this->poses.resize(count);
+	this->transformDatas.resize(count);
+	this->physicBody.resize(count);
+	this->physicShape.resize(count);
+	objectTransformBuffer = new UniformBuffer(0, count * sizeof(TransForms2D));
+}
+
+void Models::InitializePhysicProperties(const std::vector<float>& physicProperties)
+{
+	for (uint32_t i = 0; i < count; i++)
+	{
+		this->physicProperties[i] = {
+			physicProperties[0],
+			physicProperties[1],
+			physicProperties[2],
+			physicProperties[3],
+			physicProperties[4]
+		};
+	}
+}
+
+void Models::SetPhysicProperties(ModelsPhysicProperties& physicProperties, uint32_t modelIndex)
+{
+	if (modelIndex >= this->physicProperties.size()) return;
+	this->physicProperties[modelIndex] = physicProperties;
+	isPhysicObject = true;
+}
+
+void Models::InitializePhysicBody()
+{
+	if (!isPhysicObject) return;
+	if (physicProperties[0].shape2 < 0.00001f)
+		window->GetPhysicWorld()->AddCircle(this);
+	else
+		window->GetPhysicWorld()->AddBox(this);
+}
+
+void Models::Update()
+{
+	for (uint32_t i = 0; i < count; i++)
+	{
+		if (isPhysicObject) {
+			cpVect pos = cpBodyGetPosition(physicBody[i]);
+			cpFloat angle = cpBodyGetAngle(physicBody[i]);
+			poses[i].x = pos.x;
+			poses[i].y = pos.y;
+			poses[i].angle = angle;
+		}
+		float scale = poses[i].scale;
+		float cosAngle = cosf(poses[i].angle) * scale;
+		float sinAngle = sinf(poses[i].angle) * scale;
+		transformDatas[i].matSRT = {
+			cosAngle,	sinAngle,	0.0f,	0.0f,
+		   -sinAngle,	cosAngle,	0.0f,	0.0f,
+		   poses[i].x,	poses[i].y,	1.0f,	0.0f
+		};
+	}
+	objectTransformBuffer->SetData((const void*)transformDatas.data(), count * sizeof(TransForms2D), 0);
+}
+
+void Models::Updata(uint32_t modelIndex)
+{
+	objectTransformBuffer->SetData((const void*)&transformDatas[modelIndex], sizeof(TransForms2D), modelIndex * sizeof(TransForms2D));
+}
+
+void Models::Draw() const
+{
+	objectTransformBuffer->Bind();
+	window->GetRenderer()->Draw(renderIndex, (uint32_t)indices.size(), count);
 }

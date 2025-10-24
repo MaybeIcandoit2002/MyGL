@@ -1,8 +1,8 @@
 #pragma once
 #include <chipmunk.h>
-#include "../Models.h"
+#include <vector>
+class Models;
 
-// 物理世界封装类
 class PhysicWorld
 {
 public:
@@ -15,11 +15,9 @@ public:
     // 步进物理世界
     void Step(double dt);
 
-    // 添加一个圆形物体
-    void AddCircle(Models& model);
+    void AddCircle(Models* model);
 
-    // 可选：添加其他形状
-    // cpBody* AddBox(float x, float y, float width, float height, float mass);
+	void AddBox(Models* model);
 
 private:
     cpSpace* m_space; 

@@ -19,7 +19,7 @@ bool GLLogCall(const char* function, const char* file, int line) {
 }
 
 Renderer::Renderer()
-    : VBOffset(0), IBOffset(0), shader(nullptr), VAO(nullptr), VBO(nullptr), IBO(nullptr), UBO(nullptr)
+    : VBOffset(0), IBOffset(0), shader(nullptr), VAO(nullptr), VBO(nullptr), IBO(nullptr)
 {
     Only2D();
 	// Vertex Buffer Layout
@@ -47,13 +47,13 @@ void Renderer::InitializeTextures(const std::vector<std::pair<uint32_t, std::str
         Texture* texture = new Texture(pair.second);
 		texture->Bind(pair.first);
 	}
-    int* l = new int[texturePaths.size()];
+	std::vector<int>* l = new std::vector<int>();
     for (size_t i = 0; i < texturePaths.size(); i++)
     {
-        l[i] = i;
+		l->push_back(i);
     }
-	shader->SetUniform1iv("u_Textures", texturePaths.size(), l);
-	delete[] l;
+	shader->SetUniform1iv("u_Textures", texturePaths.size(), l->data());
+    delete l;
 }
 
 uint32_t Renderer::AddData(const Vertexs2D* vertexs, uint32_t vertexCount, const uint32_t* indices, uint32_t indexCount)
@@ -74,40 +74,14 @@ uint32_t Renderer::AddData(const Vertexs2D* vertexs, uint32_t vertexCount, const
     return currentIBOffset;
 }
 
-uint32_t Renderer::AddUniformData(const TransForms2D& transForm)
-{
-	UniformScale.push_back(transForm.matScale);
-	UniformRT.push_back(transForm.matRT);
-    return UBCount++;
-}
-
-void Renderer::SendToGPU(uint32_t UBsize)
+void Renderer::SendToGPU()
 {
     VBO = new VertexBuffer(vertexs.data(), VBOffset);
     IBO = new IndexBuffer(indices.data(), IBOffset);
     VAO = new VertexArray(*VBO, *layout);
-	UBO = new UniformBuffer(0, UBsize);
-	UBO->SetData(UniformScale.data(), UBCount * sizeof(glm::mat3x4), 0);
-	UBO->SetData(UniformRT.data(), UBCount * sizeof(glm::mat3x4), UBCount * sizeof(glm::mat3x4));
 }
 
-void Renderer::UpdateUniformBuffer(const TransForms2D& transForm, uint32_t UBIndex)
-{
-	if (UBIndex >= UBCount) return;
-	UniformScale[UBIndex] = transForm.matScale;
-	UniformRT[UBIndex] = transForm.matRT;
-}
-
-void Renderer::UpdateUniformBufferImmediate(const TransForms2D& transForm, uint32_t UBIndex)
-{
-    if (UBIndex >= UBCount) return;
-    UniformScale[UBIndex] = transForm.matScale;
-    UniformRT[UBIndex] = transForm.matRT;
-	UBO->SetData(&UniformScale[UBIndex], sizeof(glm::mat3x4), UBIndex * sizeof(glm::mat3x4));
-    UBO->SetData(&UniformRT[UBIndex], sizeof(glm::mat3x4), (UBCount + UBIndex) * sizeof(glm::mat3x4));
-}
-
-void SetClearColor(glm::vec4 color)
+static void SetClearColor(glm::vec4 color)
 {
     glClearColor(color.r, color.g, color.b, color.a);
 }
@@ -121,7 +95,6 @@ void Renderer::Draw(uint32_t offset, uint32_t indexCount, uint32_t instanceCount
 {
 	VAO->Bind();
 	IBO->Bind();
-	UBO->Bind();
 	shader->Bind();
 	GLCall(glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, (const void*)(offset), instanceCount));
 }

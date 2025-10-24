@@ -2,19 +2,6 @@
 #include <GL/glew.h>
 #include <vector>
 #include "glm.hpp"
-struct Vertexs2D
-{
-	glm::vec2 position;
-	glm::vec4 color;
-	glm::vec2 texCoord;
-	float texID;
-};
-struct TransForms2D
-{
-	glm::mat3x4 matScale;
-	glm::mat3x4 matRT;
-};
-
 struct VertexBufferElement
 {
 	uint32_t dimension;

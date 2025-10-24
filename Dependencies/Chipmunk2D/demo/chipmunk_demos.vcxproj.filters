@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Bench.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Buoyancy.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Chains.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDebugDraw.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemo.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemoTextSupport.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ContactGraph.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Convex.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Crane.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Joints.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\LogoSmash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\OneWay.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Planet.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Player.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Plink.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Pump.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\PyramidStack.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\PyramidTopple.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Query.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Shatter.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Slice.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Springies.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Sticky.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Tank.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\TheoJansen.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Tumble.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Unicycle.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\sokol\sokol.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\CodeSpaces\vendor\Chipmunk2D-master\demo\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{069FBC13-009F-3B18-BE70-60B922A23738}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -134,7 +134,6 @@
   <ItemGroup>
     <ClCompile Include="src\collisionSystem\PhysicWorld.cpp" />
     <ClCompile Include="src\Models.cpp" />
-    <ClCompile Include="src\Contrals.cpp" />
     <ClCompile Include="src\renderComponents\ShaderProgram.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\renderComponents\IndexBuffer.cpp" />
@@ -164,8 +163,8 @@
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
     <ClInclude Include="src\Models.h" />
-    <ClInclude Include="src\Contrals.h" />
     <ClInclude Include="src\MyDefault.h" />
+    <ClInclude Include="src\renderComponents\Rendering.h" />
     <ClInclude Include="src\renderComponents\ShaderProgram.h" />
     <ClInclude Include="src\renderComponents\Shader.h" />
     <ClInclude Include="src\renderComponents\IndexBuffer.h" />

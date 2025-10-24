@@ -1,0 +1,10 @@
+^D:\CODESPACES\VENDOR\CHIPMUNK2D-MASTER\DEMO\CMAKELISTS.TXT
+setlocal
+B:\app\CMake\bin\cmake.exe -SD:/CodeSpaces/vendor/Chipmunk2D-master -BD:/CodeSpaces/vendor/Chipmunk2D-master --check-stamp-file D:/CodeSpaces/vendor/Chipmunk2D-master/demo/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
