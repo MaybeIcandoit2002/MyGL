@@ -27,7 +27,7 @@ private:
 	uint32_t count;
 	uint32_t renderIndex;
 
-	std::vector<Vertexs2D> vertexs;
+	std::vector<Vertex2D> vertexs;
 	std::vector<uint32_t> indices;
 
 	std::vector<ModelsPhysicProperties> physicProperties;
@@ -42,7 +42,7 @@ public:
 	Models(MyWindow* window);
 	~Models();
 
-	void InitializeModelData(std::vector<Vertexs2D>& vertexs, std::vector<uint32_t>& indices);
+	void InitializeModelData(std::vector<Vertex2D>& vertexs, std::vector<uint32_t>& indices);
 	void SetModelCount(uint32_t count);
 
 	void InitializePhysicProperties(const std::vector<float>& physicProperties);

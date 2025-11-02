@@ -5,14 +5,14 @@
 #include "Models.h"
 #include "renderComponents/Layout.h"
 
-std::vector<Vertexs2D> ParseVertexs(const nlohmann::json& arr) {
-	std::vector<Vertexs2D> result = std::vector<Vertexs2D>();
+std::vector<Vertex2D> ParseVertexs(const nlohmann::json& arr) {
+	std::vector<Vertex2D> result = std::vector<Vertex2D>();
     for (const auto& v : arr) {
-        Vertexs2D vert = {};
+        Vertex2D vert = {};
         vert.position = glm::vec2(v[0].get<float>(), v[1].get<float>());
         vert.color    = glm::vec4(v[2].get<float>(), v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
-        vert.texCoord = glm::vec2(v[6].get<float>(), v[7].get<float>());
-        vert.texID    = v[8].get<float>();
+        vert.uv = glm::vec2(v[6].get<float>(), v[7].get<float>());
+        vert.textureID = v[8].get<float>();
         result.push_back(vert);
     }
     return result;
@@ -49,7 +49,7 @@ void LoadModelsFromJson(
         auto& member = source[modelName];
         Models* model = new Models(window);
 		model->SetModelCount(modelNameCount.second);
-        std::vector<Vertexs2D> vertexs = ParseVertexs(member["vertexs"]);
+        std::vector<Vertex2D> vertexs = ParseVertexs(member["vertexs"]);
         std::vector<uint32_t> indices = Parsei4(member["indices"]);
 		model->InitializeModelData(vertexs, indices);
         std::vector<float> pose = Parsef4(member["pose"]);

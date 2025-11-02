@@ -29,7 +29,7 @@ Models::~Models()
 	}
 }
 
-void Models::InitializeModelData(std::vector<Vertexs2D>& vertexs, std::vector<uint32_t>& indices)
+void Models::InitializeModelData(std::vector<Vertex2D>& vertexs, std::vector<uint32_t>& indices)
 {
 	this->vertexs = vertexs;
 	this->indices = indices;

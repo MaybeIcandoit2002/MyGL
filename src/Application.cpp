@@ -12,8 +12,6 @@
 #include "Macros.h"
 
 #include "renderComponents/Renderer.h"
-#include "renderComponents/ShaderProgram.h"
-#include "renderComponents/Texture.h"
 
 #include "collisionSystem/PhysicWorld.h"
 
@@ -24,7 +22,7 @@
 #include "tests/TestMenu.h"
 #include "tests/TestScene.h"
 
-inline static void TestInitGui(MyWindow window, test::TestMenu*& testMenu, test::Test*& currentTest) {
+inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu, test::Test*& currentTest) {
     ImGui::CreateContext();
     ImGui_ImplGlfwGL3_Init(window.GetWindow(), true);
     ImGui::StyleColorsDark();
@@ -58,9 +56,8 @@ int main(void)
     {
 		MyWindow window(Width, Height, "Hello World");
 		window.SetClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-		window.AddPicture("res/textures/star.png", 0);
-		window.AddPicture("res/textures/pic1.png", 1);
-		window.ZippedPictures();
+		window.AddImage("res/textures/star.png");
+        //window.AddImage("res/textures/pic1.png");
 
 		PhysicWorld* physicWorld = window.GetPhysicWorld();
 		physicWorld->SetGravity(cpv(0.0f, 8.0f)); 
@@ -81,11 +78,10 @@ int main(void)
                 models[0]->SetPose((float)(i + 1) * (200.f) + randomDevice.Float(-10, 10), (float)(j + 1) * 200.f + randomDevice.Float(-10, 10), (i * 3 + j));
             }
         }
-
+        window.GetRenderer()->SendToGPU();
         test::Test* currentTest = nullptr;
         test::TestMenu* testMenu = nullptr;
         TestInitGui(window, testMenu, currentTest);
-
         while (window.Loop())
         {
             DEBUG_RUN(TestGui(nullptr, testMenu, currentTest));
@@ -158,9 +154,9 @@ int main(void)
                 }
             }*/
         }
-        delete currentTest;
         if (currentTest != testMenu)
             delete testMenu;
+        delete currentTest;
         ImGui_ImplGlfwGL3_Shutdown();
         ImGui::DestroyContext();
 		window.LoopEnd();

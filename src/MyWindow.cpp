@@ -21,19 +21,28 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	glfwSwapInterval(1);
 	if (glewInit() != GLEW_OK)
 		throw std::runtime_error("Failed to initialize GLEW");
-	render = new Renderer();
-	render->InitializeShader({
-		{ GL_VERTEX_SHADER, "res/shaders/Vertex.shader" },
-		{ GL_FRAGMENT_SHADER, "res/shaders/Fragment.shader" }
-		});
-	render->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f));
-	render->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
-	render->GetShader()->SetUniformBlock("u_TransForm", 0);
+	renderer = new Renderer("res/shaders/Vertex.shader", "res/shaders/Fragment.shader");
+	renderer->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f));
+	renderer->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
+	renderer->GetShader()->SetUniformBlock("u_TransForm", 0);
 }
 
 MyWindow::~MyWindow()
 {
 	glfwTerminate();
+}
+
+void MyWindow::AddImage(const std::string imagePath)
+{
+	ImageProperty imgProp;
+	unsigned char* localBuffer = stbi_load(imagePath.c_str(), &imgProp.width, &imgProp.height, &imgProp.BPP, 4);
+	if (!localBuffer) {
+		images.pop_back();
+		throw std::runtime_error("Failed to load texture: " + imagePath);
+	}
+	imgProp.slot = renderer->AddTexture(localBuffer, imgProp.width, imgProp.height);
+	images.push_back(std::move(imgProp));
+	stbi_image_free(localBuffer);
 }
 
 void MyWindow::SetClearColor(float r, float g, float b, float a)
@@ -59,5 +68,4 @@ void MyWindow::Update()
 		model->Update();
 		model->Draw();
 	}
-
 }

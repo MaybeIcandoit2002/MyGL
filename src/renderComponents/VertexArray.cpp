@@ -3,7 +3,7 @@
 #include "VertexBuffer.h"
 #include "Layout.h"
 
-VertexArray::VertexArray(const VertexBuffer& vbo, VertexBufferLayout layout)
+VertexArray::VertexArray(const VertexBuffer& vbo, VertexLayout layout)
 {
     GLCall(glGenVertexArrays(1, &id));
     GLCall(glBindVertexArray(id));

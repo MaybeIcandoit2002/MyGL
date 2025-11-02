@@ -21,13 +21,13 @@ struct VertexBufferElement
 	}
 };
 
-class VertexBufferLayout
+class VertexLayout
 {
 private:
 	std::vector<VertexBufferElement> elements;
 	uint32_t stride;
 public:
-	VertexBufferLayout() : stride(0) {};
+	VertexLayout() : stride(0) {};
 
 	template<typename T>
 	void Push(uint32_t dimension, uint32_t normalized = GL_FALSE) {
