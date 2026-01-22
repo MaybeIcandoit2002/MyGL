@@ -25,24 +25,13 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	renderer->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f));
 	renderer->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
 	renderer->GetShader()->SetUniformBlock("u_TransForm", 0);
+
+	rootComponent = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
 }
 
 MyWindow::~MyWindow()
 {
 	glfwTerminate();
-}
-
-void MyWindow::AddImage(const std::string imagePath)
-{
-	ImageProperty imgProp;
-	unsigned char* localBuffer = stbi_load(imagePath.c_str(), &imgProp.width, &imgProp.height, &imgProp.BPP, 4);
-	if (!localBuffer) {
-		images.pop_back();
-		throw std::runtime_error("Failed to load texture: " + imagePath);
-	}
-	imgProp.slot = renderer->AddTexture(localBuffer, imgProp.width, imgProp.height);
-	images.push_back(std::move(imgProp));
-	stbi_image_free(localBuffer);
 }
 
 void MyWindow::SetClearColor(float r, float g, float b, float a)
@@ -63,9 +52,6 @@ bool MyWindow::Loop()
 
 void MyWindow::Update()
 {
-	for (auto& model : models)
-	{
-		model->Update();
-		model->Draw();
-	}
+	//physicWorld->Step(1.0 / 60.0);
+	rootComponent->Draw(renderer);
 }

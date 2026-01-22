@@ -133,7 +133,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\collisionSystem\PhysicWorld.cpp" />
-    <ClCompile Include="src\Models.cpp" />
+    <ClCompile Include="src\Components\Component.cpp" />
+    <ClCompile Include="src\Components\Utils.cpp" />
     <ClCompile Include="src\renderComponents\ShaderProgram.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\renderComponents\IndexBuffer.cpp" />
@@ -153,16 +154,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-    <None Include="res\models\models.json" />
+    <None Include="res\meshs\default.json" />
     <None Include="res\shaders\Vertex.shader" />
     <None Include="res\shaders\Fragment.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Components\Component.h" />
+    <ClInclude Include="src\Components\Utils.h" />
     <ClInclude Include="src\RandomDevice.h" />
-    <ClInclude Include="src\LoadingModelsFormJSON.h" />
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
-    <ClInclude Include="src\Models.h" />
     <ClInclude Include="src\MyDefault.h" />
     <ClInclude Include="src\renderComponents\Rendering.h" />
     <ClCompile Include="src\renderComponents\Shader.cpp" />

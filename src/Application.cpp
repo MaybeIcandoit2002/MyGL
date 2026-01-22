@@ -6,16 +6,9 @@
 #include <glm.hpp>
 
 #include "MyWindow.h"
-#include "Models.h"
-#include "LoadingModelsFormJSON.h"
 #include "RandomDevice.h"
 #include "Macros.h"
 
-#include "renderComponents/Renderer.h"
-
-#include "collisionSystem/PhysicWorld.h"
-
-#include "vendor/stb_image/stb_image.h"
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw_gl3.h"
 
@@ -56,11 +49,10 @@ int main(void)
     {
 		MyWindow window(Width, Height, "Hello World");
 		window.SetClearColor(0.9f, 0.9f, 0.9f, 1.0f);
-		window.AddImage("res/textures/star.png");
         //window.AddImage("res/textures/pic1.png");
 
 		PhysicWorld* physicWorld = window.GetPhysicWorld();
-		physicWorld->SetGravity(cpv(0.0f, 8.0f)); 
+		physicWorld->SetGravity(cpv(0.0f, 9.8f)); 
         physicWorld->SetBoundaryLine(cpv(-10.0f, 0.0f), cpv((float)Width + 10.0f, 0.0f));
         physicWorld->SetBoundaryLine(cpv(0.0f, -10.0f), cpv(0.0f, (float)Height + 10.0f));
         physicWorld->SetBoundaryLine(cpv((float)Width, (float)Height + 10.0f), cpv((float)Width, -10.0f));
@@ -69,15 +61,9 @@ int main(void)
         std::vector<std::pair<std::string, uint32_t>> modelPairs = {
             {"stars", 9}
         };
-        LoadModelsFromJson(&window, "res/models/models.json", modelPairs);
-		std::vector<Models*> models = window.GetModels();
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                models[0]->SetPose((float)(i + 1) * (200.f) + randomDevice.Float(-10, 10), (float)(j + 1) * 200.f + randomDevice.Float(-10, 10), (i * 3 + j));
-            }
-        }
+        utils::LoadImages("res/textures/star.png", window.GetRenderer());
+        utils::LoadMeshsFromJson("res/meshs/default.json", window.GetRenderer());
+        //window.GetRootComponent()
         window.GetRenderer()->SendToGPU();
         test::Test* currentTest = nullptr;
         test::TestMenu* testMenu = nullptr;

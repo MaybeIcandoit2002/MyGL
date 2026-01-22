@@ -121,9 +121,15 @@ struct Vertex2D
 	float textureID;
 };
 
-struct TransForms2D
+struct UniformData
 {
-	glm::mat3x4 matSRT;
+	glm::mat3x4 positionTransform = {
+		1.0f, 0.0f, 0.0f, 0.0f,
+		0.0f, 1.0f, 0.0f, 0.0f,
+		0.0f, 0.0f, 1.0f, 0.0f
+	};
+	/*glm::vec4 color;
+	glm::mat3x4 uvTransform;*/
 };
 
 class Renderer
