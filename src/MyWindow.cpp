@@ -3,7 +3,7 @@
 #include "gtc/matrix_transform.hpp"
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), physicWorld(new PhysicWorld())
+	: windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), physicWorld(new PhysicWorld()), lastTime(0.0)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -40,18 +40,28 @@ void MyWindow::SetClearColor(float r, float g, float b, float a)
 	glClearColor(clearColor.r, clearColor.g, clearColor.b, clearColor.a);
 }
 
-bool MyWindow::Loop()
+bool MyWindow::Loop(double& deltaTime)
 {
+	deltaTime = glfwGetTime() - lastTime;
+	lastTime = glfwGetTime();
+	
+	physicWorld->Step(deltaTime);
 	bool run = !glfwWindowShouldClose(window);
 	if (run) {
 		glClear(GL_COLOR_BUFFER_BIT);
+		BeforeUpdate();
 		Update();
+		Sources::GetInstance()->DrawOver();
 	}
 	return run;
 }
 
+void MyWindow::BeforeUpdate()
+{
+	rootComponent->BeforeUpdate(renderer);
+}
+
 void MyWindow::Update()
 {
-	//physicWorld->Step(1.0 / 60.0);
-	rootComponent->Draw(renderer);
+	rootComponent->Update(renderer);
 }

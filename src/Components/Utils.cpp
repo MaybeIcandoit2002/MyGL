@@ -12,7 +12,7 @@ namespace utils
             vert.color = glm::vec4(v[2].get<float>(), v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
             vert.uv = glm::vec2(v[6].get<float>(), v[7].get<float>());
             vert.textureID = v[8].get<float>();
-            result->push_back(vert);
+            result->push_back(std::move(vert));
         }
         return result;
     }
@@ -20,7 +20,7 @@ namespace utils
     std::vector<uint32_t>* Parsei4(const nlohmann::json& arr) {
         std::vector<uint32_t>* result = new std::vector<uint32_t>();
         for (const auto& idx : arr) {
-            result->push_back(idx.get<int>());
+            result->push_back(idx.get<uint32_t>());
         }
         return result;
     }
@@ -63,12 +63,16 @@ namespace utils
             const std::string& meshName = meshPair.key();
             const nlohmann::json& member = meshPair.value();
             Mesh* mesh = Sources::GetInstance()->GetMesh(meshName);
-            if (mesh->vertexs != nullptr && mesh->indices != nullptr) {
-                continue; // 已经加载过完整数据
+            std::vector<Vertex2D>* vertexsTemp = ParseVertexs(member["vertexs"]);
+            std::vector<uint32_t>* indicesTemp = Parsei4(member["indices"]);
+            if (mesh->vertexs != nullptr && mesh->indices != nullptr &&
+                vertexsTemp != nullptr && indicesTemp != nullptr &&
+                !vertexsTemp->empty() && !indicesTemp->empty()) {
+                continue; // 已经加载过完整数据 并且 新数据不为空
             }
-            mesh->vertexs = ParseVertexs(member["vertexs"]);
-            mesh->indices = Parsei4(member["indices"]);
-			mesh->renderID = renderer->AddData(mesh->vertexs->data(), mesh->vertexs->size(), mesh->indices->data(), mesh->indices->size());
+            mesh->vertexs = vertexsTemp;
+            mesh->indices = indicesTemp;
+			mesh->renderID = renderer->AddData(vertexsTemp->data(), vertexsTemp->size(), indicesTemp->data(), indicesTemp->size());
         }
     }
 }

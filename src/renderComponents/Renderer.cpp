@@ -72,11 +72,10 @@ uint16_t Renderer::AddData(const Vertex2D* vertexs, uint32_t vertexCount, const 
     }
     
     // 添加索引数据,索引需要加上顶点偏移
-    // ⚠️ 注意: 这里使用 currentVBOffset(字节偏移)存在逻辑错误
     // 应该使用顶点数量偏移,而不是字节偏移
     for (uint32_t i = 0; i < indexCount; i++)
     {
-        this->indices.push_back(indices[i] + currentVBOffset);
+        this->indices.push_back(indices[i] + currentVBOffset / sizeof(Vertex2D));
     }
 
     // 返回当前索引缓冲的字节偏移(用于 glDrawElements 的 offset 参数)
@@ -89,7 +88,7 @@ void Renderer::SendToGPU()
     VBO = new VertexBuffer(vertexs.data(), VBOffset);
     
     // 创建并上传索引缓冲
-    IBO = new IndexBuffer(indices.data(), IBOffset);
+    IBO = new IndexBuffer(indices.data(), IBOffset / sizeof(uint32_t));
     
     // 创建顶点数组对象,关联 VBO 和顶点布局
     VAO = new VertexArray(*VBO, *layout);
@@ -100,13 +99,9 @@ void Renderer::SendToGPU()
     shader->SetUniform1iv("u_Textures", textures.size(), textureIndices);
 }
 
-static void SetClearColor(glm::vec4 color)
-{
-    glClearColor(color.r, color.g, color.b, color.a);
-}
-
 void Renderer::Clear(glm::vec4 color) const
 {
+    glClearColor(color.r, color.g, color.b, color.a);
     GLCall(glClear(GL_COLOR_BUFFER_BIT));
 }
 

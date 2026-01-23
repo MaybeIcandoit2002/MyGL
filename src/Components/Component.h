@@ -26,19 +26,41 @@ public:
 public:
 	Component(bool hasPhysicBody, Mesh* mesh) :
 		hasPhysicBody(hasPhysicBody), mesh(mesh),
-		meshIndex(uint16_t(mesh->transform.size())),
+		meshIndex(uint16_t(mesh->uniform.size())),
 		transform({ glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f), 0.0f }),
 		backgroundColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f)), textureSlot(0),
 		parent(nullptr) {
 		mesh->count++;
 		mesh->changedCount = true;
-		mesh->transform.push_back(UniformData{});
+		mesh->uniform.push_back(UniformData{});
 	}
 	~Component() {
-		for (Component* child: children)
+		for (Component* child : children)
 		{
 			child->~Component();
 		}
 	}
-	void Draw(Renderer* renderer);
+	void AddChild(Component* child);
+	void GetPosition(glm::vec2& position);
+	void SetPosition(glm::vec2 position);
+	void SetPosition(float x, float y);
+	void GetWorldPosition(glm::vec2& position);
+	void SetWorldPosition(glm::vec2 position);
+	void SetWorldPosition(float x, float y);
+	void GetScale(glm::vec2& scale);
+	void SetScale(glm::vec2 scale);
+	void SetScale(float x, float y);
+	void GetWorldScale(glm::vec2& scale);
+	void SetWorldScale(glm::vec2 scale);
+	void SetWorldScale(float x, float y);
+	void GetRotation(float& rotation);
+	void SetRotation(float rotation);
+	void GetWorldRotation(float& rotation);
+	void SetWorldRotation(float rotation);
+	void GetBackgroundColor(glm::vec4& color);
+	void SetBackgroundColor(glm::vec4 color);
+	void SetBackgroundColor(float r, float g, float b, float a);
+
+	void BeforeUpdate(Renderer* renderer);
+	void Update(Renderer* renderer);
 };

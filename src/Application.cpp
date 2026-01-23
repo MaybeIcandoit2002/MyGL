@@ -45,7 +45,7 @@ inline static void TestGui(const void* testObject, test::Test* testMenu, test::T
 int main(void)
 {
 	RandomDevice randomDevice;
-	int Width = 1920, Height = 1080;
+	int Width = 1080, Height = 720;
     {
 		MyWindow window(Width, Height, "Hello World");
 		window.SetClearColor(0.9f, 0.9f, 0.9f, 1.0f);
@@ -58,18 +58,36 @@ int main(void)
         physicWorld->SetBoundaryLine(cpv((float)Width, (float)Height + 10.0f), cpv((float)Width, -10.0f));
         physicWorld->SetBoundaryLine(cpv((float)Width + 10.0f, (float)Height), cpv(-10.0f, (float)Height));
 
-        std::vector<std::pair<std::string, uint32_t>> modelPairs = {
-            {"stars", 9}
-        };
         utils::LoadImages("res/textures/star.png", window.GetRenderer());
         utils::LoadMeshsFromJson("res/meshs/default.json", window.GetRenderer());
-        //window.GetRootComponent()
+
+		Component* root = window.GetRootComponent();
+        Component* background = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
+        Component* rightBar = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
+        root->SetBackgroundColor(1.0f, 1.0f, 1.0f, 1.0f);
+		root->AddChild(background);
+        root->AddChild(rightBar);
+        background->SetScale(Width, Height);
+		background->SetBackgroundColor(0.9f, 0.9f, 0.9f, 1.0f);
+        rightBar->SetPosition(Width - 200.0f, 0);
+		rightBar->SetScale(200.0f, Height);
+        rightBar->SetBackgroundColor(0.5f, 0.5f, 0.5f, 1.0f);
+
+
+        glm::vec2 pos;
         window.GetRenderer()->SendToGPU();
         test::Test* currentTest = nullptr;
         test::TestMenu* testMenu = nullptr;
         TestInitGui(window, testMenu, currentTest);
-        while (window.Loop())
+
+        double deltaTime;
+        while (window.Loop(deltaTime))
         {
+
+            /*rightBar->GetWorldPosition(pos);
+            pos.x += 50.0f * deltaTime;
+			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2;
+            rightBar->SetWorldPosition(pos);*/
             DEBUG_RUN(TestGui(nullptr, testMenu, currentTest));
             window.LoopEnd();
             /*if (glfwGetKey(window, GLFW_KEY_RIGHT)) {

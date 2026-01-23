@@ -13,14 +13,13 @@ struct Mesh
 {
     bool isDraw = false;
 	bool changedCount = false;
-	bool needUpdate = false;
     uint16_t count = 0;
-    uint16_t renderID;
+    uint16_t renderID = 0;
 
     std::vector<Vertex2D>* vertexs = nullptr;
     std::vector<uint32_t>* indices = nullptr;
 
-    std::vector<UniformData> transform;
+    std::vector<UniformData> uniform;
 
     MeshBuffer transformBuffer = nullptr;
 };
@@ -45,6 +44,11 @@ public:
         delete meshs[meshName].indices;
         delete meshs[meshName].transformBuffer;
 		meshs.erase(meshName);
+    }
+    inline void DrawOver() {
+        for (auto& meshPair : meshs) {
+			meshPair.second.isDraw = false; 
+		}
     }
 private:
     static Sources* instance;

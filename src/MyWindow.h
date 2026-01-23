@@ -9,6 +9,7 @@
 #include "./vendor/stb_image/stb_image.h"
 
 #include "Components/Component.h"
+#include "Components/Utils.h"
 class MyWindow
 {
 private:
@@ -18,6 +19,7 @@ private:
 	glm::vec2 windowSize;
 	glm::vec4 clearColor;
 	Component* rootComponent;
+	double lastTime;
 public:
 	MyWindow(int width, int height, const char* title);
 	~MyWindow();
@@ -31,7 +33,8 @@ public:
 	inline float GetWidth() { return windowSize[0]; }
 	inline float GetHeight() { return windowSize[1]; }
 
-	bool Loop();
+	bool Loop(double& deltaTime);
 	void LoopEnd() { glfwSwapBuffers(window); glfwPollEvents(); }
+	void BeforeUpdate();
 	void Update();
 };
