@@ -159,12 +159,15 @@
     <None Include="res\shaders\Fragment.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cpp src\Components\Utils.h" />
     <ClInclude Include="src\Components\Component.h" />
+    <ClInclude Include="src\Default.h" />
+    <ClInclude Include="src\Components\TouchDispatcher.h" />
     <ClInclude Include="src\Components\Utils.h" />
+    <ClInclude Include="src\Components\Layouts.h" />
     <ClInclude Include="src\RandomDevice.h" />
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
-    <ClInclude Include="src\MyDefault.h" />
     <ClInclude Include="src\renderComponents\Rendering.h" />
     <ClCompile Include="src\renderComponents\Shader.cpp" />
     <ClInclude Include="src\renderComponents\IndexBuffer.h" />

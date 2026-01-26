@@ -52,29 +52,23 @@ int main(void)
         //window.AddImage("res/textures/pic1.png");
 
 		PhysicWorld* physicWorld = window.GetPhysicWorld();
-		physicWorld->SetGravity(cpv(0.0f, 9.8f)); 
-        physicWorld->SetBoundaryLine(cpv(-10.0f, 0.0f), cpv((float)Width + 10.0f, 0.0f));
-        physicWorld->SetBoundaryLine(cpv(0.0f, -10.0f), cpv(0.0f, (float)Height + 10.0f));
-        physicWorld->SetBoundaryLine(cpv((float)Width, (float)Height + 10.0f), cpv((float)Width, -10.0f));
-        physicWorld->SetBoundaryLine(cpv((float)Width + 10.0f, (float)Height), cpv(-10.0f, (float)Height));
+		physicWorld->SetGravity(cpv(0.0f, 9.8f));
 
-        utils::LoadImages("res/textures/star.png", window.GetRenderer());
-        utils::LoadMeshsFromJson("res/meshs/default.json", window.GetRenderer());
+        Sources::Instance()->LoadImages("res/textures/star.png", window.GetRenderer());
+        Sources::Instance()->LoadMeshsFromJson("res/meshs/default.json", window.GetRenderer());
 
 		Component* root = window.GetRootComponent();
-        Component* background = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
-        Component* rightBar = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
+        Component* background = new Component(Sources::Instance()->GetMesh("rootMesh"));
+        Component* rightBar = new Component(Sources::Instance()->GetMesh("rootMesh"));
         root->SetBackgroundColor(1.0f, 1.0f, 1.0f, 1.0f);
 		root->AddChild(background);
         root->AddChild(rightBar);
-        background->SetScale(Width, Height);
+        background->SetScale((float)Width, (float)Height);
 		background->SetBackgroundColor(0.9f, 0.9f, 0.9f, 1.0f);
-        rightBar->SetPosition(Width - 200.0f, 0);
-		rightBar->SetScale(200.0f, Height);
+        rightBar->SetPosition((float)Width - 200.0f, 0);
+		rightBar->SetScale(200.0f, (float)Height);
         rightBar->SetBackgroundColor(0.5f, 0.5f, 0.5f, 1.0f);
 
-
-        glm::vec2 pos;
         window.GetRenderer()->SendToGPU();
         test::Test* currentTest = nullptr;
         test::TestMenu* testMenu = nullptr;
@@ -86,7 +80,7 @@ int main(void)
 
             /*rightBar->GetWorldPosition(pos);
             pos.x += 50.0f * deltaTime;
-			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2;
+			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2; 
             rightBar->SetWorldPosition(pos);*/
             DEBUG_RUN(TestGui(nullptr, testMenu, currentTest));
             window.LoopEnd();

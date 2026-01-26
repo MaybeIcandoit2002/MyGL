@@ -9,7 +9,6 @@
 #include "./vendor/stb_image/stb_image.h"
 
 #include "Components/Component.h"
-#include "Components/Utils.h"
 class MyWindow
 {
 private:
@@ -17,6 +16,7 @@ private:
 	PhysicWorld* physicWorld;
 	Renderer* renderer;
 	glm::vec2 windowSize;
+	glm::vec2 lastWindowSize;
 	glm::vec4 clearColor;
 	Component* rootComponent;
 	double lastTime;

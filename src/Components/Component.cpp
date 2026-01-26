@@ -2,19 +2,27 @@
 
 void Component::AddChild(Component* child)
 {
+	if (child->parent) {
+		child->parent->RemoveChild(child);
+	}
 	child->parent = this;
 	children.push_back(child);
 }
-void Component::GetPosition(glm::vec2& position)
+void Component::RemoveChild(Component* child)
+{
+	children.erase(std::find(children.begin(), children.end(), child));
+	child->parent = nullptr;
+}
+void Component::GetPosition(glm::vec2& position) const
 {
 	position = transform.position;
-	if (parent == nullptr) return;
+	if (!parent) return;
 	position -= parent->transform.position;
 }
 void Component::SetPosition(glm::vec2 position)
 {
 	transform.position = position;
-	if (parent == nullptr) return;
+	if (!parent) return;
 	transform.position *= parent->transform.scale;
 	transform.position += parent->transform.position;
 }
@@ -22,11 +30,11 @@ void Component::SetPosition(float x, float y)
 {
 	transform.position.x = x;
 	transform.position.y = y;
-	if (parent == nullptr) return;
+	if (!parent) return;
 	transform.position *= parent->transform.scale;
 	transform.position += parent->transform.position;
 }
-void Component::GetWorldPosition(glm::vec2& position)
+void Component::GetWorldPosition(glm::vec2& position) const
 {
 	position = transform.position;
 }
@@ -39,7 +47,7 @@ void Component::SetWorldPosition(float x, float y)
 	transform.position.x = x;
 	transform.position.y = y;
 }
-void Component::GetScale(glm::vec2& scale)
+void Component::GetScale(glm::vec2& scale) const
 {
 	scale = transform.scale;
 	if (parent == nullptr) return;
@@ -62,7 +70,7 @@ void Component::SetScale(float x, float y)
 	transform.scale.x *= parent->transform.scale.x;
 	transform.scale.y *= parent->transform.scale.y;
 }
-void Component::GetWorldScale(glm::vec2& scale)
+void Component::GetWorldScale(glm::vec2& scale) const
 {
 	scale = transform.scale;
 }
@@ -75,7 +83,7 @@ void Component::SetWorldScale(float x, float y)
 	transform.scale.x = x;
 	transform.scale.y = y;
 }
-void Component::GetRotation(float& rotation)
+void Component::GetRotation(float& rotation) const
 {
 	rotation = transform.rotation;
 	if (parent == nullptr) return;
@@ -87,7 +95,7 @@ void Component::SetRotation(float rotation)
 	if (parent == nullptr) return;
 	transform.rotation += parent->transform.rotation;
 }
-void Component::GetWorldRotation(float& rotation)
+void Component::GetWorldRotation(float& rotation) const
 {
 	rotation = transform.rotation;
 }
@@ -95,7 +103,7 @@ void Component::SetWorldRotation(float rotation)
 {
 	transform.rotation = rotation;
 }
-void Component::GetBackgroundColor(glm::vec4& color)
+void Component::GetBackgroundColor(glm::vec4& color) const
 {
 	color = backgroundColor;
 }
@@ -139,4 +147,42 @@ void Component::Update(Renderer* renderer)
 	{
 		child->Update(renderer);
 	}
+}
+
+void Component::InitPhsicProperty(float radius, float mass, float restitution, float friction)
+{
+	hasPhysicBody = true;
+	cpBody* body;
+	PhysicWorld::Instance()->AddCircle(
+		body, shape,
+		transform.position.x, transform.position.y,
+		radius, mass, restitution, friction
+	);
+}
+
+void Component::InitPhsicProperty(float width, float height, float mass, float restitution, float friction)
+{
+	hasPhysicBody = true;
+	cpBody* body;
+	PhysicWorld::Instance()->AddBox(
+		body, shape,
+		transform.position.x, transform.position.y,
+		width, height, mass, restitution, friction
+	);
+}
+
+void Component::InitPhsicProperty(int count, float* vertecies, float mass, float restitution, float friction)
+{
+	hasPhysicBody = true;
+	cpBody* body;
+	std::vector<cpVect> vects = {};
+	for (int i = 0; i < count; i++)
+	{
+		vects.emplace_back(cpv(vertecies[2 * i], vertecies[2 * i + 1]));
+	}
+	PhysicWorld::Instance()->AddPolygon(
+		body, shape,
+		transform.position.x, transform.position.y,
+		count, vects.data(), mass, restitution, friction
+	);
 }

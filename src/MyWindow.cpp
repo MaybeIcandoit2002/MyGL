@@ -3,7 +3,7 @@
 #include "gtc/matrix_transform.hpp"
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: windowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), physicWorld(new PhysicWorld()), lastTime(0.0)
+	: windowSize(width, height), lastWindowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), lastTime(0.0)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -26,7 +26,33 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	renderer->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
 	renderer->GetShader()->SetUniformBlock("u_TransForm", 0);
 
-	rootComponent = new Component(false, Sources::GetInstance()->GetMesh("rootMesh"));
+	rootComponent = new Component(utils::CopyMesh(
+		"root", Sources::Instance()->GetMesh("box"),
+		{
+			glm::vec2(width, height),
+			glm::vec4(0, 0, 0, 0),
+			glm::vec2(1, 1),
+			-1
+		},
+		renderer));
+
+	PhysicWorld::Initialize(physicWorld, (float)width, (float)height);
+	physicWorld->SetGravity(cpv(0.0f, 9.8f));
+
+
+	/*glfwSetFramebufferSizeCallback(window,
+		[](GLFWwindow* window, int newWidth, int newHeight)
+		{
+			float aspect = 1920.0f / 1080.0f;
+			if (newWidth / newHeight > aspect)
+			{
+				glViewport(0, 0, newWidth, newWidth / aspect);
+			}
+			else
+			{
+				glViewport(0, 0, newHeight * aspect, newHeight);
+			}
+		});*/
 }
 
 MyWindow::~MyWindow()
@@ -51,7 +77,7 @@ bool MyWindow::Loop(double& deltaTime)
 		glClear(GL_COLOR_BUFFER_BIT);
 		BeforeUpdate();
 		Update();
-		Sources::GetInstance()->DrawOver();
+		Sources::Instance()->DrawOver();
 	}
 	return run;
 }
