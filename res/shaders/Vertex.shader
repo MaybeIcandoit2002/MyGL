@@ -34,7 +34,6 @@ vec2 u_uvTransform() {
 
 void main()
 {
-
 	gl_Position = u_proj * u_view * vec4((u_positionTransform() * vec3(in_position.xy, 1.0)).xy, 0.0, 1.0);
 	v_Color = mix(in_backgroundColor, u_Color(), u_Color().a);
 	v_texCoord = u_uvTransform() + in_texCoord;

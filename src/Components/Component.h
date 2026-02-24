@@ -1,9 +1,10 @@
 #pragma once
 #include <glm.hpp>
 
-#include "Utils.h"
 #include "../renderComponents/renderer.h"
 #include "../collisionSystem/PhysicWorld.h"
+
+#include "Utils.h"
 
 class Component
 {
@@ -29,7 +30,7 @@ public:
 		hasPhysicBody(false), mesh(mesh),
 		meshIndex(uint16_t(mesh->uniform.size())),
 		transform({ glm::vec2(0.0f, 0.0f), glm::vec2(1.0f, 1.0f), 0.0f }),
-		backgroundColor(glm::vec4(1.0f, 1.0f, 1.0f, 0.0f)), textureSlot(0),
+		backgroundColor(glm::vec4(1.0f, 1.0f, 1.0f, 1.0f)), textureSlot(0),
 		shape(nullptr),
 		parent(nullptr)
 	{
@@ -100,6 +101,7 @@ public:
 	inline void SetMass(float mass) { cpShapeSetMass(shape, mass); }
 	inline void SetRestitution(float restitution) { cpShapeSetElasticity(shape, restitution); }
 	inline void SetFriction(float friction) { cpShapeSetFriction(shape, friction); }
+	inline void synPosition() { transform.position = utils::ParseVec(cpBodyGetPosition(cpShapeGetBody(shape))); }
 
 	inline float GetMass() const { return static_cast<float>(cpShapeGetMass(shape)); }
 	inline float GetMoment() const { return static_cast<float>(cpShapeGetMoment(shape)); }
@@ -109,7 +111,7 @@ public:
 	inline glm::vec2 GetForce() const { return utils::ParseVec(cpBodyGetForce(cpShapeGetBody(shape))); }
 	inline glm::vec2 GetAcceleration() const { return GetForce() / GetMass(); }
 	inline glm::vec2 GetMomentum() const { return GetVelocity() * GetMass(); }
-	inline float GetAngle() const { static_cast<float>(cpBodyGetAngle(cpShapeGetBody(shape))); }
+	inline float GetAngle() const { return static_cast<float>(cpBodyGetAngle(cpShapeGetBody(shape))); }
 	inline float GetAngleVelocity() const { return static_cast<float>(cpBodyGetAngularVelocity(cpShapeGetBody(shape))); }
 	inline float GetKineticEnergy() const { return static_cast<float>(cpBodyKineticEnergy(cpShapeGetBody(shape))); }
 

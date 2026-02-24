@@ -139,6 +139,7 @@
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\renderComponents\IndexBuffer.cpp" />
     <ClCompile Include="src\renderComponents\Renderer.cpp" />
+    <ClCompile Include="src\tests\EditProperties.h" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_draw.cpp" />
@@ -148,7 +149,6 @@
     <ClCompile Include="src\renderComponents\VertexBuffer.cpp" />
     <ClCompile Include="src\renderComponents\Texture.cpp" />
     <ClCompile Include="src\tests\TestMenu.cpp" />
-    <ClCompile Include="src\tests\TestScene.cpp" />
     <ClCompile Include="src\renderComponents\UniformBuffer.cpp" />
     <ClCompile Include="src\MyWindow.cpp" />
   </ItemGroup>
@@ -161,10 +161,8 @@
   <ItemGroup>
     <ClInclude Include="cpp src\Components\Utils.h" />
     <ClInclude Include="src\Components\Component.h" />
-    <ClInclude Include="src\Default.h" />
     <ClInclude Include="src\Components\TouchDispatcher.h" />
     <ClInclude Include="src\Components\Utils.h" />
-    <ClInclude Include="src\Components\Layouts.h" />
     <ClInclude Include="src\RandomDevice.h" />
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
@@ -185,7 +183,7 @@
     <ClInclude Include="src\renderComponents\VertexBuffer.h" />
     <ClInclude Include="src\renderComponents\Layout.h" />
     <ClInclude Include="src\tests\TestMenu.h" />
-    <ClInclude Include="src\tests\TestScene.h" />
+    <ClInclude Include="src\tests\AddNewObject.h" />
     <ClInclude Include="src\renderComponents\UniformBuffer.h" />
     <ClInclude Include="src\MyWindow.h" />
   </ItemGroup>

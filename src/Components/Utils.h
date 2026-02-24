@@ -2,8 +2,6 @@
 #include <vector>
 #include <map>
 #include <fstream>
-#include <glm.hpp>
-#include <functional>
 #include <cstdint>
 #include <algorithm>
 
@@ -59,14 +57,15 @@ public:
 		}
     }
 private:
+    static Sources* instance;
     Sources() = default;
     Sources(const Sources&) = delete;
     ~Sources() = default;
     Sources& operator=(const Sources&) = delete;
 public:
     static Sources* Instance() {
-        static Sources instance;
-        return &instance;
+        if (!instance) instance = new Sources();
+        return instance;
     }
 };
 
@@ -93,5 +92,5 @@ namespace utils
     /// <returns>
     /// 返回指向新创建 mesh 的指针。
     /// </returns>
-    Mesh* CopyMesh(const std::string& name, Mesh* mesh, const Vertex2D& changeInfo = {}, Renderer* renderer = nullptr);
+    Mesh* CopyMesh(const std::string& name, Mesh* mesh, const Vertex2D& changeInfo = Vertex2D{}, Renderer* renderer = nullptr);
 }

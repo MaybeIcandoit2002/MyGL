@@ -25,7 +25,7 @@ PhysicWorld::PhysicWorld(cpFloat width, cpFloat height, cpFloat elasticity, cpFl
     cpSpaceAddShape(m_space, leftBoundaryLine);
 	cpSpaceAddShape(m_space, rightBoundaryLine);
     
-    cpSpaceSetGravity(m_space, cpv(0, -9.8));
+    cpSpaceSetGravity(m_space, cpv(0, 9.8));
 }
 
 PhysicWorld::~PhysicWorld()
@@ -52,7 +52,7 @@ void PhysicWorld::AddCircle(
     cpFloat mass, cpFloat elasticity, cpFloat friction
 ) {
     cpFloat moment = cpMomentForCircle(mass, 0, radius, cpvzero);
-    body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
+    body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
     cpBodySetPosition(body, cpv(positionX, positionY));
     shape = cpSpaceAddShape(m_space, cpCircleShapeNew(body, radius, cpvzero));
     cpShapeSetFriction(shape, friction);
@@ -65,7 +65,8 @@ void PhysicWorld::AddBox(
     cpFloat mass, cpFloat elasticity, cpFloat friction
 )  {
     cpFloat moment = cpMomentForBox(mass, width, height);
-	body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
+    
+	body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
 	cpBodySetPosition(body, cpv(positionX, positionY));
 	shape = cpSpaceAddShape(m_space, cpBoxShapeNew(body, width, height, 0));
 	cpShapeSetFriction(shape, friction);
@@ -78,7 +79,7 @@ void PhysicWorld::AddPolygon(
     cpFloat mass, cpFloat elasticity, cpFloat friction
 ) {
     cpFloat moment = cpMomentForPoly(mass, count, vertices, cpvzero,0);
-    body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
+    body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
     cpBodySetPosition(body, cpv(positionX, positionY));
     shape = cpSpaceAddShape(m_space, cpPolyShapeNew(body, count, vertices, cpTransformIdentity,0));
     cpShapeSetFriction(shape, friction);

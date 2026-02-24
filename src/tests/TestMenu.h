@@ -7,12 +7,12 @@ namespace test
 	class TestMenu : public Test
 	{
 	private:
-		Test*& currentTest;
 		std::vector<std::pair<std::string, Test* (*)()>> tests;
 	public:
-		TestMenu(Test*& currentTestPointer);
+		MyWindow* window;
+		TestMenu(MyWindow* window);
 
-		void OnImGuiRender() override;
+		Test* OnImGuiRender(MyWindow* window) override;
 		template<typename T>
 		void RegisterTest(const std::string& name)
 		{

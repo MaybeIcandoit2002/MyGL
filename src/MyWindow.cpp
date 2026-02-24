@@ -3,7 +3,7 @@
 #include "gtc/matrix_transform.hpp"
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: windowSize(width, height), lastWindowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), lastTime(0.0)
+	: windowSize(width, height), lastWindowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), lastTime(0.0), renderer(renderer), running(false)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -21,23 +21,26 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	glfwSwapInterval(1);
 	if (glewInit() != GLEW_OK)
 		throw std::runtime_error("Failed to initialize GLEW");
+
 	renderer = new Renderer("res/shaders/Vertex.shader", "res/shaders/Fragment.shader");
-	renderer->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, (float)height, 0.0f, -1.0f, 1.0f));
+	renderer->GetShader()->SetUniformMat4f("u_proj", glm::ortho(0.0f, (float)width, 0.0f, (float)height, -1.0f, 1.0f));
 	renderer->GetShader()->SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
 	renderer->GetShader()->SetUniformBlock("u_TransForm", 0);
 
-	rootComponent = new Component(utils::CopyMesh(
-		"root", Sources::Instance()->GetMesh("box"),
+	Sources::Instance()->LoadMeshsFromJson("res/meshs/default.json", renderer);
+	selectedComponent = rootComponent = new Component(
+		utils::CopyMesh("root", Sources::Instance()->GetMesh("box"),
 		{
-			glm::vec2(width, height),
-			glm::vec4(0, 0, 0, 0),
+			glm::vec2(width * 0.9f, height * 0.9f),
+			glm::vec4(1.0, 1.0, 1.0f, 1.0f),
 			glm::vec2(1, 1),
 			-1
 		},
 		renderer));
+	rootComponent->SetPosition(width / 2.0f, height / 2.0f);
 
 	PhysicWorld::Initialize(physicWorld, (float)width, (float)height);
-	physicWorld->SetGravity(cpv(0.0f, 9.8f));
+	physicWorld->SetGravity(cpv(0, -9.8));
 
 
 	/*glfwSetFramebufferSizeCallback(window,
@@ -71,7 +74,7 @@ bool MyWindow::Loop(double& deltaTime)
 	deltaTime = glfwGetTime() - lastTime;
 	lastTime = glfwGetTime();
 	
-	physicWorld->Step(deltaTime);
+	if (running) physicWorld->Step(deltaTime);
 	bool run = !glfwWindowShouldClose(window);
 	if (run) {
 		glClear(GL_COLOR_BUFFER_BIT);

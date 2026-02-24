@@ -25,6 +25,8 @@ void Component::SetPosition(glm::vec2 position)
 	if (!parent) return;
 	transform.position *= parent->transform.scale;
 	transform.position += parent->transform.position;
+	if (hasPhysicBody)
+	cpBodySetPosition(cpShapeGetBody(shape), cpv(transform.position.x, transform.position.y));
 }
 void Component::SetPosition(float x, float y)
 {
@@ -33,6 +35,8 @@ void Component::SetPosition(float x, float y)
 	if (!parent) return;
 	transform.position *= parent->transform.scale;
 	transform.position += parent->transform.position;
+	if (hasPhysicBody)
+	cpBodySetPosition(cpShapeGetBody(shape), cpv(transform.position.x, transform.position.y));
 }
 void Component::GetWorldPosition(glm::vec2& position) const
 {
@@ -41,11 +45,15 @@ void Component::GetWorldPosition(glm::vec2& position) const
 void Component::SetWorldPosition(glm::vec2 position)
 {
 	transform.position = position;
+	if (hasPhysicBody)
+	cpBodySetPosition(cpShapeGetBody(shape), cpv(transform.position.x, transform.position.y));
 }
 void Component::SetWorldPosition(float x, float y)
 {
 	transform.position.x = x;
 	transform.position.y = y;
+	if (hasPhysicBody)
+	cpBodySetPosition(cpShapeGetBody(shape), cpv(transform.position.x, transform.position.y));
 }
 void Component::GetScale(glm::vec2& scale) const
 {
@@ -94,6 +102,8 @@ void Component::SetRotation(float rotation)
 	transform.rotation = rotation;
 	if (parent == nullptr) return;
 	transform.rotation += parent->transform.rotation;
+	if (hasPhysicBody)
+	cpBodySetAngle(cpShapeGetBody(shape), transform.rotation);
 }
 void Component::GetWorldRotation(float& rotation) const
 {
@@ -102,6 +112,8 @@ void Component::GetWorldRotation(float& rotation) const
 void Component::SetWorldRotation(float rotation)
 {
 	transform.rotation = rotation;
+	if (hasPhysicBody) 
+	cpBodySetAngle(cpShapeGetBody(shape), transform.rotation);
 }
 void Component::GetBackgroundColor(glm::vec4& color) const
 {
@@ -120,10 +132,16 @@ void Component::SetBackgroundColor(float r, float g, float b, float a)
 }
 void Component::BeforeUpdate(Renderer* renderer)
 {
+	if (hasPhysicBody)
+	{
+		synPosition();
+		transform.rotation = GetAngle();
+	}
+	float rotation = glm::radians(transform.rotation);
 	mesh->uniform[meshIndex].positionTransform = {
-		transform.scale.x * cosf(transform.rotation), -sinf(transform.rotation)						, 0.0f, 0.0f,
-		sinf(transform.rotation)					, transform.scale.y * cosf(transform.rotation)	, 0.0f, 0.0f,
-		transform.position.x						, transform.position.y							, 1.0f, 0.0f
+		transform.scale.x * cosf(rotation)	, transform.scale.x * sinf(rotation)	, 0.0f, 0.0f,
+		transform.scale.y * -sinf(rotation)	, transform.scale.y * cosf(rotation)	, 0.0f, 0.0f,
+		transform.position.x				, transform.position.y					, 1.0f, 0.0f
 	};
 	mesh->uniform[meshIndex].color = backgroundColor;
 	for (Component* child : children)

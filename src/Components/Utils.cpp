@@ -1,5 +1,7 @@
 #include "Utils.h"
 
+Sources* Sources::instance = nullptr;
+
 void Sources::LoadImages(const std::string imagePath, Renderer* renderer) {
     if (Instance()->HasImage(imagePath)) return;
     ImageProperty* imgProp = Instance()->GetImage(imagePath);
@@ -114,7 +116,7 @@ namespace utils
                 v.uv *= changeInfo.uv;
                 v.textureID = changeInfo.textureID;
             }
-            mesh->renderID = renderer->AddData(newMesh->vertexs->data(), newMesh->vertexs->size(), newMesh->indices->data(), newMesh->indices->size());
+            newMesh->renderID = renderer->AddData(newMesh->vertexs->data(), newMesh->vertexs->size(), newMesh->indices->data(), newMesh->indices->size());
         }
         else
         {
@@ -122,6 +124,6 @@ namespace utils
             newMesh->indices = mesh->indices;
             newMesh->renderID = mesh->renderID;
         }
-        return mesh;
+        return newMesh;
     }
 }

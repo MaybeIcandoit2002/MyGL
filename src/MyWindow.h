@@ -3,10 +3,8 @@
 #include <GLFW/glfw3.h>
 #include <map>
 
-#include "glm.hpp"
 #include "renderComponents/renderer.h"
 #include "collisionSystem/PhysicWorld.h"
-#include "./vendor/stb_image/stb_image.h"
 
 #include "Components/Component.h"
 class MyWindow
@@ -21,6 +19,9 @@ private:
 	Component* rootComponent;
 	double lastTime;
 public:
+	bool running;
+	Component* selectedComponent;
+
 	MyWindow(int width, int height, const char* title);
 	~MyWindow();
 
