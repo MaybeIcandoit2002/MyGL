@@ -1,0 +1,42 @@
+{
+  "box": {
+    "mesh": "box",
+    "size": [ 50, 50 ],
+    "color": [ 0.0, 0.0, 1.0, 1.0 ],
+    "shape": "box",
+    "collider": [ 50, 50 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "circle": {
+    "mesh": "circle",
+    "size": [ 50, 50 ],
+    "color": [ 1.0, 1.0, 1.0, 0.0 ],
+    "shape": "circle",
+    "collider": [ 25 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "ground": {
+    "mesh": "box",
+    "size": [ 1000, 10 ],
+    "color": [ 0.0, 0.0, 0.0, 1.0 ],
+    "shape": "box",
+    "collider": [ 1000, 10 ],
+    "mass": -1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "car": {
+    "mesh": "box",
+    "size": [ 120, 80 ],
+    "color": [ 0.0, 0.0, 0.0, 0.0 ],
+    "shape": "box",
+    "collider": [ 120, 80 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  }
+}

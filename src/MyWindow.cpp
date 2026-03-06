@@ -1,9 +1,13 @@
 #include "MyWindow.h"
 #include <stdexcept>
 #include "gtc/matrix_transform.hpp"
+#include "vendor/imgui/imgui.h"
+#include "vendor/imgui/imgui_impl_glfw_gl3.h"
 
 MyWindow::MyWindow(int width, int height, const char* title)
-	: windowSize(width, height), lastWindowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), lastTime(0.0), renderer(renderer), running(false)
+	: windowSize(width, height), lastWindowSize(width, height), clearColor(1.0f, 1.0f, 1.0f, 1.0f), lastTime(0.0),
+	renderer(renderer), running(false),
+	selectedComponent(nullptr)
 {
 	if (!glfwInit())
 		throw std::runtime_error("Failed to initialize GLFW");
@@ -28,7 +32,7 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	renderer->GetShader()->SetUniformBlock("u_TransForm", 0);
 
 	Sources::Instance()->LoadMeshsFromJson("res/meshs/default.json", renderer);
-	selectedComponent = rootComponent = new Component(
+	rootComponent = new Component(
 		utils::CopyMesh("root", Sources::Instance()->GetMesh("box"),
 		{
 			glm::vec2(width * 0.9f, height * 0.9f),
@@ -42,6 +46,34 @@ MyWindow::MyWindow(int width, int height, const char* title)
 	PhysicWorld::Initialize(physicWorld, (float)width, (float)height);
 	physicWorld->SetGravity(cpv(0, -9.8));
 
+	// 注册 GLFW 鼠标点击回调
+	glfwSetWindowUserPointer(window, this);
+	glfwSetMouseButtonCallback(window,
+	[](GLFWwindow* window, int button, int action, int mods)
+	{
+		ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+		if (ImGui::GetIO().WantCaptureMouse) return; // 如果 ImGui 捕获了鼠标事件, 则不处理点击事件
+		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+		{
+			MyWindow* self = static_cast<MyWindow*>(glfwGetWindowUserPointer(window));
+			double xpos, ypos;
+			glfwGetCursorPos(window, &xpos, &ypos);
+			ypos = self->GetHeight() - ypos;
+			DEBUG_PRINT("Mouse Clicked at: (" << xpos << ", " << ypos << ")");
+			// 处理鼠标点击事件
+			self->changeSelectedComponent = true;
+			self->selectedComponent = nullptr;
+			for (Component* child : self->rootComponent->children)
+			{
+				if (child->enabled && child->checkPointInShape(float(xpos), float(ypos)))
+				{
+					DEBUG_PRINT("Component " << child->name << " selected.");
+					self->selectedComponent = const_cast<Component*>(child);
+					break;
+				}
+			}
+		}
+	});
 
 	/*glfwSetFramebufferSizeCallback(window,
 		[](GLFWwindow* window, int newWidth, int newHeight)

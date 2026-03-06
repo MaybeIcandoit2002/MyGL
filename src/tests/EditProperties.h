@@ -6,8 +6,9 @@ namespace test {
     {
 	private:
         int _ColliderType;
+        int _ColliderShape;
     public:
-        EditProperties(): _ColliderType(0) {}
+        EditProperties(): _ColliderType(0), _ColliderShape(0) {}
         void OnUpdate(const void* p, float deltaTime) override {}
         void OnRender() override {}
         Test* OnImGuiRender(MyWindow* window) override
@@ -50,36 +51,51 @@ namespace test {
             
             if (!target->hasPhysicBody)
             {
-				static const char* colliderItems[] = { "dynamic", "static" };
+                static const char* colliderItems[] = { "dynamic", "static" };
                 ImGui::Text("Collider Type:");
                 ImGui::SameLine();
                 ImGui::Combo("##ColliderType", &_ColliderType, colliderItems, IM_ARRAYSIZE(colliderItems));
-                if (ImGui::Button("Add Box Collider"))
+                if (ImGui::Button("Add Collider"))
                 {
-                    glm::vec2 s;
-                    target->GetWorldScale(s);
-                    target->InitPhsicProperty(s.x, s.y, (_ColliderType == 0) ? 1.0f : -1.0f, 0.2f, 0.2f);
+                    target->SetSensor(false);
+                    if (_ColliderType == 0) // dynamic
+                    {
+						target->SwitchToDynamic();
+                    }
+                    else // static
+                    {
+                        target->SwitchToStatic();
+                    }
 				}
 			}
             else
             {
-                // 只读展示一些物理量，后续你可以按需要改成可写接口
+                glm::vec2 vel = target->GetVelocity();
+                float angularVel = target->GetAngleVelocity();
                 float mass = target->GetMass();
                 float friction = target->GetFriction();
                 float restitution = target->GetRestitution();
-                glm::vec2 vel = target->GetVelocity();
 
-
-                ImGui::Text("Mass: %.3f", mass);
-                ImGui::Text("Friction: %.3f", friction);
-                ImGui::Text("Restitution: %.3f", restitution);
-                ImGui::Text("Velocity: (%.3f, %.3f)", vel.x, vel.y);
-
-                // 如需可编辑，可以改用 DragFloat/SliderFloat 并调用 SetFriction/SetRestitution/SetMass
-                // 例如：
-                // if (ImGui::DragFloat("Friction", &friction, 0.01f, 0.0f, 1.0f)) {
-                //     target->SetFriction(friction);
-                // }
+                if (ImGui::DragFloat2("Velocity", &vel.x, 0.1f))
+                {
+                    target->SetVelocity(vel);
+                }
+                if (ImGui::DragFloat("Angular Velocity", &angularVel, 0.1f))
+                {
+                    target->SetAngleVelocity(angularVel);
+				}
+                if (ImGui::DragFloat("Mass", &mass, 0.1f, 0.0f, 1000.0f))
+                {
+                    target->SetMass(mass);
+				}
+                if (ImGui::DragFloat("Friction", &friction, 0.01f, 0.0f, 1.0f))
+                {
+					target->SetFriction(friction);
+                }
+                if (ImGui::DragFloat("Restitution", &restitution, 0.01f, 0.0f, 1.0f))
+                {
+                    target->SetRestitution(restitution);
+				}
             }
 			return nullptr;
         }

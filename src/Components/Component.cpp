@@ -134,8 +134,11 @@ void Component::BeforeUpdate(Renderer* renderer)
 {
 	if (hasPhysicBody)
 	{
-		synPosition();
+		syncPosition();
 		transform.rotation = GetAngle();
+		if (transform.rotation > 180) SetWorldRotation(transform.rotation - 360);
+		else if (transform.rotation < -180) SetWorldRotation(transform.rotation + 360);
+		
 	}
 	float rotation = glm::radians(transform.rotation);
 	mesh->uniform[meshIndex].positionTransform = {
@@ -167,9 +170,8 @@ void Component::Update(Renderer* renderer)
 	}
 }
 
-void Component::InitPhsicProperty(float radius, float mass, float restitution, float friction)
+void Component::InitPhysicProperty(float radius, float mass, float restitution, float friction)
 {
-	hasPhysicBody = true;
 	cpBody* body;
 	PhysicWorld::Instance()->AddCircle(
 		body, shape,
@@ -178,9 +180,8 @@ void Component::InitPhsicProperty(float radius, float mass, float restitution, f
 	);
 }
 
-void Component::InitPhsicProperty(float width, float height, float mass, float restitution, float friction)
+void Component::InitPhysicProperty(float width, float height, float mass, float restitution, float friction)
 {
-	hasPhysicBody = true;
 	cpBody* body;
 	PhysicWorld::Instance()->AddBox(
 		body, shape,
@@ -189,9 +190,8 @@ void Component::InitPhsicProperty(float width, float height, float mass, float r
 	);
 }
 
-void Component::InitPhsicProperty(int count, float* vertecies, float mass, float restitution, float friction)
+void Component::InitPhysicProperty(int count, float* vertecies, float mass, float restitution, float friction)
 {
-	hasPhysicBody = true;
 	cpBody* body;
 	std::vector<cpVect> vects = {};
 	for (int i = 0; i < count; i++)

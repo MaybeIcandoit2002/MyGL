@@ -20,6 +20,7 @@ private:
 	double lastTime;
 public:
 	bool running;
+	bool changeSelectedComponent;
 	Component* selectedComponent;
 
 	MyWindow(int width, int height, const char* title);

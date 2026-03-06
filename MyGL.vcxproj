@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
+    <None Include="res\Components\default.json" />
     <None Include="res\meshs\default.json" />
     <None Include="res\shaders\Vertex.shader" />
     <None Include="res\shaders\Fragment.shader" />

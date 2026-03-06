@@ -7,10 +7,11 @@
 
 #include "tests/TestMenu.h"
 #include "tests/AddNewObject.h"
+#include "tests/EditProperties.h"
 
 inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu, test::Test*& currentTest) {
     ImGui::CreateContext();
-    ImGui_ImplGlfwGL3_Init(window.GetWindow(), true);
+    ImGui_ImplGlfwGL3_Init(window.GetWindow(), false);
     ImGui::StyleColorsDark();
 
     currentTest = nullptr;
@@ -22,34 +23,49 @@ inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu, test
 
 inline static void TestGui(const void* testObject, test::TestMenu* testMenu, test::Test*& currentTest) {
     ImGui_ImplGlfwGL3_NewFrame();
+	MyWindow* window = testMenu->window;
     if (currentTest) {
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-        if (testMenu->window->running)
+        if (window->running)
         {
-            if (ImGui::Button("Stop"))
+            if (ImGui::Button("Stop PhysicSystem Progress"))
             {
-                testMenu->window->running = false;
+                window->running = false;
             }
         }
         else
         {
-            if (ImGui::Button("Run"))
+            if (ImGui::Button("Run PhysicSystem Progress"))
             {
-                testMenu->window->running = true;
+                window->running = true;
             }
         }
+        if (window->changeSelectedComponent)
+        {
+			window->changeSelectedComponent = false;
+            if (currentTest != testMenu) delete currentTest;
+            if (window->selectedComponent)
+            {
+                currentTest = new test::EditProperties();
+            }
+            else
+            {
+                currentTest = testMenu;
+            }
+		}
         currentTest->OnUpdate(testObject, 0.0f);
         currentTest->OnRender();
-        test::Test* newTest = currentTest->OnImGuiRender(testMenu->window);
+        test::Test* newTest = currentTest->OnImGuiRender(window);
         if (newTest != nullptr)
         {
             if (currentTest != testMenu) delete currentTest;
             currentTest = newTest;
-			newTest->OnImGuiRender(testMenu->window);
+			newTest->OnImGuiRender(window);
         }
         if (currentTest != testMenu && ImGui::Button("<-")) {
             delete currentTest;
             currentTest = testMenu;
+			window->selectedComponent = nullptr;
         }
     }
     ImGui::Render();
@@ -63,7 +79,6 @@ int main(void)
         MyWindow* window = nullptr;
         Renderer* renderer = nullptr;
         PhysicWorld* physicWorld = nullptr;
-
 
         window = new MyWindow(Width, Height, "Hello World");
         renderer = window->GetRenderer();
@@ -80,7 +95,6 @@ int main(void)
         double deltaTime;
         while (window->Loop(deltaTime))
         {
-
             /*rightBar->GetWorldPosition(pos);
             pos.x += 50.0f * deltaTime;
 			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2; 

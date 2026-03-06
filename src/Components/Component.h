@@ -20,8 +20,10 @@ protected:
 	cpShape* shape;						// 物理形状
 
 	Component* parent;					// 组件的父组件
-	std::vector<Component*> children;	// 组件的子组件
 public:
+	std::vector<Component*> children;	// 组件的子组件
+	std::string name;					// 组件名称
+	std::string shapeType;				// 物理形状类型（"circle", "box", "polygon"）
 	bool hasPhysicBody;					// 是否有物理刚体
 
 	bool enabled = true;				// 用于触摸系统过滤
@@ -42,6 +44,11 @@ public:
 		for (Component* child : children)
 		{
 			child->~Component();
+		}
+		if (shape)
+		{
+			cpBodyFree(cpShapeGetBody(shape));
+			cpShapeFree(shape);
 		}
 	}
 	void BeforeUpdate(Renderer* renderer);
@@ -77,7 +84,7 @@ public:
 	/// <param name="mass">刚体质量</param>
 	/// <param name="restitution">弹性系数（0-1，越大越“弹”）</param>
 	/// <param name="friction">摩擦系数（0-1，越大摩擦越大）</param>
-	void InitPhsicProperty(float radius, float mass, float restitution, float friction);
+	void InitPhysicProperty(float radius, float mass, float restitution, float friction);
 	/// <summary>
 	/// 初始化矩形物理碰撞体和刚体。
 	/// 以组件中心为原点创建一个轴对齐矩形形状。
@@ -87,7 +94,7 @@ public:
 	/// <param name="mass">刚体质量</param>
 	/// <param name="restitution">弹性系数（0-1，越大越“弹”）</param>
 	/// <param name="friction">摩擦系数（0-1，越大摩擦越大）</param>
-	void InitPhsicProperty(float width, float height, float mass, float restitution, float friction);
+	void InitPhysicProperty(float width, float height, float mass, float restitution, float friction);
 	/// <summary>
 	/// 初始化多边形物理碰撞体和刚体。
 	/// 顶点坐标为局部空间坐标，以组件中心为原点。
@@ -97,11 +104,20 @@ public:
 	/// <param name="mass">刚体质量</param>
 	/// <param name="restitution">弹性系数（0-1，越大越“弹”）</param>
 	/// <param name="friction">摩擦系数（0-1，越大摩擦越大）</param>
-	void InitPhsicProperty(int count, float* vertecies, float mass, float restitution, float friction);
+	void InitPhysicProperty(int count, float* vertecies, float mass, float restitution, float friction);
+
+	inline void SwitchToStatic() { cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_STATIC); }
+	inline void SwitchToDynamic() { cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_DYNAMIC); }
+	//inline void SwitchToKinematic() { cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_KINEMATIC); }
+
+	inline void SetSensor(bool sensor) { hasPhysicBody = !sensor; cpShapeSetSensor(shape, cpBool(sensor)); }
+	inline void SetVelocity(glm::vec2 velocity) { cpBodySetVelocity(cpShapeGetBody(shape), cpv(velocity.x, velocity.y)); }
+	inline void SetAngleVelocity(float angularVelocity) { cpBodySetAngularVelocity(cpShapeGetBody(shape), angularVelocity); }
 	inline void SetMass(float mass) { cpShapeSetMass(shape, mass); }
 	inline void SetRestitution(float restitution) { cpShapeSetElasticity(shape, restitution); }
 	inline void SetFriction(float friction) { cpShapeSetFriction(shape, friction); }
-	inline void synPosition() { transform.position = utils::ParseVec(cpBodyGetPosition(cpShapeGetBody(shape))); }
+
+	inline void syncPosition() { transform.position = utils::ParseVec(cpBodyGetPosition(cpShapeGetBody(shape))); }
 
 	inline float GetMass() const { return static_cast<float>(cpShapeGetMass(shape)); }
 	inline float GetMoment() const { return static_cast<float>(cpShapeGetMoment(shape)); }
@@ -115,5 +131,5 @@ public:
 	inline float GetAngleVelocity() const { return static_cast<float>(cpBodyGetAngularVelocity(cpShapeGetBody(shape))); }
 	inline float GetKineticEnergy() const { return static_cast<float>(cpBodyKineticEnergy(cpShapeGetBody(shape))); }
 
-	bool checkPointInShape(float x, float y) const { return cpShapePointQuery(shape, cpv(x, y), nullptr) != 0; }
+	bool checkPointInShape(float x, float y) const { return cpShapePointQuery(shape, cpv(x, y), nullptr) <= 0; }
 };
