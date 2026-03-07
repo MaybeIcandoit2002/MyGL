@@ -1,20 +1,20 @@
 #include "TestMenu.h"
-#include <iostream>
+
 namespace test
 {
-	TestMenu::TestMenu(Test*& currentTestPointer)
-		: currentTest(currentTestPointer)
+	TestMenu::TestMenu(MyWindow* window)
+		:window(window)
 	{
 	}
-	void TestMenu::OnImGuiRender()
+	Test* TestMenu::OnImGuiRender(MyWindow* window)
 	{
 		for (auto& test : tests)
 		{
 			if (ImGui::Button(test.first.c_str()))
 			{
-				currentTest = test.second();
-				std::cout << "Current Test: " << test.first << std::endl;
+				return test.second();
 			}
 		}
+		return nullptr;
 	}
 }

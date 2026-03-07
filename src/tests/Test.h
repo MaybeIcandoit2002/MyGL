@@ -1,5 +1,7 @@
 #pragma once
+#include <glm.hpp>
 #include "../vendor/imgui/imgui.h"
+#include "../MyWindow.h"
 
 namespace test {
 	class Test
@@ -10,6 +12,6 @@ namespace test {
 
 		virtual void OnUpdate(const void* p, float deltaTime) {}
 		virtual void OnRender() {}
-		virtual void OnImGuiRender() {}
+		virtual Test* OnImGuiRender(MyWindow* window) { return nullptr; }
 	};
 }

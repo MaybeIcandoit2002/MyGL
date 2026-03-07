@@ -1,23 +1,42 @@
 #pragma once
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include "glm.hpp"
+#include <map>
+
+#include "renderComponents/renderer.h"
+#include "collisionSystem/PhysicWorld.h"
+
+#include "Components/Component.h"
 class MyWindow
 {
 private:
 	GLFWwindow* window;
-	int width;
-	int height;
+	PhysicWorld* physicWorld;
+	Renderer* renderer;
+	glm::vec2 windowSize;
+	glm::vec2 lastWindowSize;
 	glm::vec4 clearColor;
+	Component* rootComponent;
+	double lastTime;
 public:
+	bool running;
+	bool changeSelectedComponent;
+	Component* selectedComponent;
+
 	MyWindow(int width, int height, const char* title);
 	~MyWindow();
-	bool ShouldClose() const;
-	void End() const;
-	void SetClearColor(float r, float g, float b, float a);
-	void Update();
-	GLFWwindow* GetWindow() { return window; }
-	int GetWidth() { return width; }
-	int GetHeight() { return height; }
-};
 
+	void SetClearColor(float r, float g, float b, float a);
+
+	inline GLFWwindow* GetWindow() { return window; }
+	inline PhysicWorld* GetPhysicWorld() { return physicWorld; }
+	inline Renderer* GetRenderer() { return renderer; }
+	inline Component* GetRootComponent() { return rootComponent; }
+	inline float GetWidth() { return windowSize[0]; }
+	inline float GetHeight() { return windowSize[1]; }
+
+	bool Loop(double& deltaTime);
+	void LoopEnd() { glfwSwapBuffers(window); glfwPollEvents(); }
+	void BeforeUpdate();
+	void Update();
+};

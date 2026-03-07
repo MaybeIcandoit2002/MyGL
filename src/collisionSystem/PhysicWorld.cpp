@@ -1,16 +1,39 @@
 #include "PhysicWorld.h"
 
-PhysicWorld::PhysicWorld()
-{
-    // 创建   
-    m_space = cpSpaceNew();
+PhysicWorld* PhysicWorld::instance = nullptr;
 
-    // 创建世界边界（静态body）
+PhysicWorld::PhysicWorld(cpFloat width, cpFloat height, cpFloat elasticity, cpFloat friction, cpFloat thickness)
+	: width(width), height(height), boundaryElasticity(elasticity), boundaryFriction(friction), boundaryThickness(thickness)
+{
+    m_space = cpSpaceNew();
     staticBody = cpSpaceGetStaticBody(m_space);
+    
+    topBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, height), cpv(width, height), thickness);
+	bottomBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, 0), cpv(width, 0), thickness);
+	leftBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, 0), cpv(0, height), thickness);
+    rightBoundaryLine = cpSegmentShapeNew(staticBody, cpv(width, 0), cpv(width, height), thickness);
+	cpShapeSetElasticity(topBoundaryLine, elasticity);
+    cpShapeSetElasticity(bottomBoundaryLine, elasticity);
+    cpShapeSetElasticity(leftBoundaryLine, elasticity);
+    cpShapeSetElasticity(rightBoundaryLine, elasticity);
+	cpShapeSetFriction(topBoundaryLine, friction);
+    cpShapeSetFriction(bottomBoundaryLine, friction);
+    cpShapeSetFriction(leftBoundaryLine, friction);
+    cpShapeSetFriction(rightBoundaryLine, friction);
+    cpSpaceAddShape(m_space, topBoundaryLine);
+    cpSpaceAddShape(m_space, bottomBoundaryLine);
+    cpSpaceAddShape(m_space, leftBoundaryLine);
+	cpSpaceAddShape(m_space, rightBoundaryLine);
+    
+    cpSpaceSetGravity(m_space, cpv(0, 9.8));
 }
 
 PhysicWorld::~PhysicWorld()
 {
+	cpShapeFree(topBoundaryLine);
+	cpShapeFree(bottomBoundaryLine);
+	cpShapeFree(leftBoundaryLine);
+	cpShapeFree(rightBoundaryLine);
     cpSpaceFree(m_space);
 }
 
@@ -18,58 +41,75 @@ void PhysicWorld::SetGravity(cpVect gravity)
 {
 	cpSpaceSetGravity(m_space, gravity);
 }
-
-void PhysicWorld::SetBoundaryLine(cpVect v1, cpVect v2)
-{
-    cpShape* boundaryLine = cpSegmentShapeNew(staticBody, v1, v2, 50);
-    cpShapeSetElasticity(boundaryLine, 1.0f);
-    cpShapeSetFriction(boundaryLine, 1.0f);
-    cpSpaceAddShape(m_space, boundaryLine);
-}
-
 void PhysicWorld::Step(double dt)
 {
     cpSpaceStep(m_space, dt);
 }
 
-void PhysicWorld::AddCircle(Models& model)
-{
-    float* pose = model.GetPose();
-	float* physicProps = model.GetPhysicProperties();
-    float x = pose[0] + physicProps[0];
-    float y = pose[1] + physicProps[1];
-    float radius = physicProps[2] / 2;
-	float mass = physicProps[3];
-
-    // 计算转动惯量
+void PhysicWorld::AddCircle(
+    cpBody*& body, cpShape*& shape,
+	cpFloat positionX, cpFloat positionY, cpFloat radius,
+    cpFloat mass, cpFloat elasticity, cpFloat friction
+) {
     cpFloat moment = cpMomentForCircle(mass, 0, radius, cpvzero);
-
-    // 创建刚体
-    cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
-    cpBodySetPosition(body, cpv(x, y));
-
-    // 创建圆形shape
-    cpShape* shape = cpSpaceAddShape(m_space, cpCircleShapeNew(body, radius, cpvzero));
-    cpShapeSetFriction(shape, 0.7f);
-    cpShapeSetElasticity(shape, 0.8f);
-
-    // 可选：设置碰撞类型、用户数据等
-    // cpShapeSetCollisionType(shape, 1);
-    // cpShapeSetUserData(shape, ...);
-
-	model.SetPhysicBody(body);
+    body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
+    cpBodySetPosition(body, cpv(positionX, positionY));
+    shape = cpSpaceAddShape(m_space, cpCircleShapeNew(body, radius, cpvzero));
+    cpShapeSetFriction(shape, friction);
+    cpShapeSetElasticity(shape, elasticity);
 }
 
-// 可选：添加矩形物体
-/*
-cpBody* PhysicWorld::AddBox(float x, float y, float width, float height, float mass)
+void PhysicWorld::AddBox(
+    cpBody*& body, cpShape*& shape,
+    cpFloat positionX, cpFloat positionY, cpFloat width, cpFloat height,
+    cpFloat mass, cpFloat elasticity, cpFloat friction
+)  {
+    cpFloat moment = cpMomentForBox(mass, width, height);
+    
+	body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
+	cpBodySetPosition(body, cpv(positionX, positionY));
+	shape = cpSpaceAddShape(m_space, cpBoxShapeNew(body, width, height, 0));
+	cpShapeSetFriction(shape, friction);
+	cpShapeSetElasticity(shape, elasticity);
+}
+
+void PhysicWorld::AddPolygon(
+    cpBody*& body, cpShape*& shape,
+    cpFloat positionX, cpFloat positionY, int count, cpVect* vertices,
+    cpFloat mass, cpFloat elasticity, cpFloat friction
+) {
+    cpFloat moment = cpMomentForPoly(mass, count, vertices, cpvzero,0);
+    body = cpSpaceAddBody(m_space, (mass <= 0) ? cpBodyNewStatic() : cpBodyNew(mass, moment));
+    cpBodySetPosition(body, cpv(positionX, positionY));
+    shape = cpSpaceAddShape(m_space, cpPolyShapeNew(body, count, vertices, cpTransformIdentity,0));
+    cpShapeSetFriction(shape, friction);
+    cpShapeSetElasticity(shape, elasticity);
+}
+
+void PhysicWorld::AddCord(cpBody* bodyA, cpBody* bodyB, cpVect anchorA, cpVect anchorB, cpFloat distance)
 {
-    float moment = cpMomentForBox(mass, width, height);
-    cpBody* body = cpSpaceAddBody(m_space, cpBodyNew(mass, moment));
-    cpBodySetPosition(body, cpv(x, y));
-    cpShape* shape = cpSpaceAddShape(m_space, cpBoxShapeNew(body, width, height, 0));
-    cpShapeSetFriction(shape, 0.7f);
-    cpShapeSetElasticity(shape, 0.8f);
-    return body;
+    cpConstraint* constraint = cpSlideJointNew(bodyA, bodyB, anchorA, anchorB, 0.0f, distance);
+    cpSpaceAddConstraint(m_space, constraint);
 }
-*/
+
+void PhysicWorld::AddSpring(cpBody* bodyA, cpBody* bodyB, cpVect anchorA, cpVect anchorB, cpFloat restLength, cpFloat stiffness, cpFloat damping)
+{
+	cpConstraint* constraint = cpDampedSpringNew(
+		bodyA,  bodyB,
+		anchorA,anchorB,
+		restLength, stiffness, damping
+	);
+	cpSpaceAddConstraint(m_space, constraint);
+}
+
+void PhysicWorld::Initialize(PhysicWorld*& world, cpFloat width, cpFloat height, cpFloat elasticity, cpFloat friction, cpFloat thickness)
+{
+    if (instance) return;
+    world = instance = new PhysicWorld(width, height, elasticity, friction, thickness);
+}
+
+void PhysicWorld::Free()
+{
+    delete instance;
+    instance = nullptr;
+}

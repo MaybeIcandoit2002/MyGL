@@ -108,10 +108,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(SolutionDir)Dependencies\GLEW\include;$(SolutionDir)Dependencies\GLFW\include;$(SolutionDir)Dependencies\glm;$(SolutionDir)Dependencies\Chipmunk2D\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(SolutionDir)Dependencies\GLFW\lib-vc2022;$(SolutionDir)Dependencies\GLEW\lib\Release\Win32;$(SolutionDir)Dependencies\Chipmunk2D\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glew32s.lib;glfw3.lib;opengl32.lib;User32.lib;Gdi32.lib;Shell32.lib;chipmunk.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -130,12 +133,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\collisionSystem\PhysicWorld.cpp" />
-    <ClCompile Include="src\Models.cpp" />
-    <ClCompile Include="src\Contrals.cpp" />
+    <ClCompile Include="src\Components\Component.cpp" />
+    <ClCompile Include="src\Components\Utils.cpp" />
     <ClCompile Include="src\renderComponents\ShaderProgram.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\renderComponents\IndexBuffer.cpp" />
     <ClCompile Include="src\renderComponents\Renderer.cpp" />
+    <ClCompile Include="src\tests\EditProperties.h" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_demo.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui_draw.cpp" />
@@ -145,25 +149,26 @@
     <ClCompile Include="src\renderComponents\VertexBuffer.cpp" />
     <ClCompile Include="src\renderComponents\Texture.cpp" />
     <ClCompile Include="src\tests\TestMenu.cpp" />
-    <ClCompile Include="src\tests\TestScene.cpp" />
     <ClCompile Include="src\renderComponents\UniformBuffer.cpp" />
     <ClCompile Include="src\MyWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\models\models.json" />
+    <None Include="README.md" />
+    <None Include="res\Components\default.json" />
+    <None Include="res\meshs\default.json" />
     <None Include="res\shaders\Vertex.shader" />
     <None Include="res\shaders\Fragment.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cpp src\Components\Utils.h" />
+    <ClInclude Include="src\Components\Component.h" />
+    <ClInclude Include="src\Components\TouchDispatcher.h" />
+    <ClInclude Include="src\Components\Utils.h" />
     <ClInclude Include="src\RandomDevice.h" />
-    <ClInclude Include="src\LoadingModelsFormJSON.h" />
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
-    <ClInclude Include="src\Models.h" />
-    <ClInclude Include="src\Contrals.h" />
-    <ClInclude Include="src\MyDefault.h" />
-    <ClInclude Include="src\renderComponents\ShaderProgram.h" />
-    <ClInclude Include="src\renderComponents\Shader.h" />
+    <ClInclude Include="src\renderComponents\Rendering.h" />
+    <ClCompile Include="src\renderComponents\Shader.cpp" />
     <ClInclude Include="src\renderComponents\IndexBuffer.h" />
     <ClInclude Include="src\renderComponents\Renderer.h" />
     <ClInclude Include="src\tests\Test.h" />
@@ -178,9 +183,8 @@
     <ClInclude Include="src\renderComponents\VertexArray.h" />
     <ClInclude Include="src\renderComponents\VertexBuffer.h" />
     <ClInclude Include="src\renderComponents\Layout.h" />
-    <ClInclude Include="src\renderComponents\Texture.h" />
     <ClInclude Include="src\tests\TestMenu.h" />
-    <ClInclude Include="src\tests\TestScene.h" />
+    <ClInclude Include="src\tests\AddNewObject.h" />
     <ClInclude Include="src\renderComponents\UniformBuffer.h" />
     <ClInclude Include="src\MyWindow.h" />
   </ItemGroup>

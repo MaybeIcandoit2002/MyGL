@@ -1,26 +1,25 @@
-#include "Texture.h"
+#include "Renderer.h"
 #include <iostream>
-#include "../vendor/stb_image/stb_image.h"
-Texture::Texture(const std::string& path)
-	: filePath(path), localBuffer(nullptr), width(0), height(0), BPP(0)
+Texture::Texture(const unsigned char* localBuffer, int width, int height)
 {
-	localBuffer = stbi_load(path.c_str(), &width, &height, &BPP, 4);
 	GLCall(glGenTextures(1, &id));
 	GLCall(glBindTexture(GL_TEXTURE_2D, id));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE));
 	GLCall(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE));
-	if (localBuffer)
-	{
-		GLCall(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, localBuffer));
-		GLCall(glBindTexture(GL_TEXTURE_2D, 0));
-		stbi_image_free(localBuffer);
-	}
-	else
-	{
-		std::cout << "Failed to load texture: " << path << std::endl;
-	}
+	// 将图片数据上传到 GPU
+	GLCall(glTexImage2D(
+		GL_TEXTURE_2D,        // 目标: 2D 纹理
+		0,                    // Mipmap 级别: 0(基础级别)
+		GL_RGBA8,             // GPU 内部格式: RGBA 每通道 8 位
+		width, height,        // 纹理尺寸
+		0,                    // 边框(必须为 0,已废弃参数)
+		GL_RGBA,              // 数据格式: RGBA
+		GL_UNSIGNED_BYTE,     // 数据类型: 无符号字节
+		localBuffer           // 图片数据指针
+	));
+	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
 
 Texture::~Texture()

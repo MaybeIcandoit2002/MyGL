@@ -1,130 +1,106 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <sstream>
-
-#include <glm.hpp>
-#include <gtc/matrix_transform.hpp>
-
 #include "MyWindow.h"
-#include "Contrals.h"
-#include "Models.h"
-#include "LoadingModelsFormJSON.h"
 #include "RandomDevice.h"
+#include "Macros.h"
 
-#include "renderComponents/Renderer.h"
-#include "renderComponents/ShaderProgram.h"
-#include "renderComponents/Texture.h"
-
-#include "collisionSystem/PhysicWorld.h"
-
-#include "vendor/stb_image/stb_image.h"
 #include "vendor/imgui/imgui.h"
 #include "vendor/imgui/imgui_impl_glfw_gl3.h"
 
 #include "tests/TestMenu.h"
-#include "tests/TestScene.h"
+#include "tests/AddNewObject.h"
+#include "tests/EditProperties.h"
+
+inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu, test::Test*& currentTest) {
+    ImGui::CreateContext();
+    ImGui_ImplGlfwGL3_Init(window.GetWindow(), false);
+    ImGui::StyleColorsDark();
+
+    currentTest = nullptr;
+    testMenu = new test::TestMenu(&window);
+    currentTest = testMenu;
+
+    testMenu->RegisterTest<test::AddNewObject>("Add New Object");
+}
+
+inline static void TestGui(const void* testObject, test::TestMenu* testMenu, test::Test*& currentTest) {
+    ImGui_ImplGlfwGL3_NewFrame();
+	MyWindow* window = testMenu->window;
+    if (currentTest) {
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+        if (window->running)
+        {
+            if (ImGui::Button("Stop PhysicSystem Progress"))
+            {
+                window->running = false;
+            }
+        }
+        else
+        {
+            if (ImGui::Button("Run PhysicSystem Progress"))
+            {
+                window->running = true;
+            }
+        }
+        if (window->changeSelectedComponent)
+        {
+			window->changeSelectedComponent = false;
+            if (currentTest != testMenu) delete currentTest;
+            if (window->selectedComponent)
+            {
+                currentTest = new test::EditProperties();
+            }
+            else
+            {
+                currentTest = testMenu;
+            }
+		}
+        currentTest->OnUpdate(testObject, 0.0f);
+        currentTest->OnRender();
+        test::Test* newTest = currentTest->OnImGuiRender(window);
+        if (newTest != nullptr)
+        {
+            if (currentTest != testMenu) delete currentTest;
+            currentTest = newTest;
+			newTest->OnImGuiRender(window);
+        }
+        if (currentTest != testMenu && ImGui::Button("<-")) {
+            delete currentTest;
+            currentTest = testMenu;
+			window->selectedComponent = nullptr;
+        }
+    }
+    ImGui::Render();
+    ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+}
 int main(void)
 {
 	RandomDevice randomDevice;
-	int Width = 1920, Height = 1080;
+	int Width = 1080, Height = 720;
     {
-		MyWindow window(Width, Height, "Hello World");
-		window.SetClearColor(0.9f, 0.9f, 0.9f, 1.0f);
+        MyWindow* window = nullptr;
+        Renderer* renderer = nullptr;
+        PhysicWorld* physicWorld = nullptr;
 
-		PhysicWorld physicWorld;
-		physicWorld.SetGravity(cpv(0.0f, 8.0f));
-        physicWorld.SetBoundaryLine(cpv(-10.0f, 0.0f), cpv((float)Width + 10.0f, 0.0f));
-        physicWorld.SetBoundaryLine(cpv(0.0f, -10.0f), cpv(0.0f, (float)Height + 10.0f));
-        physicWorld.SetBoundaryLine(cpv((float)Width, (float)Height + 10.0f), cpv((float)Width, -10.0f));
-        physicWorld.SetBoundaryLine(cpv((float)Width + 10.0f, (float)Height), cpv(-10.0f, (float)Height));
+        window = new MyWindow(Width, Height, "Hello World");
+        renderer = window->GetRenderer();
+        physicWorld = window->GetPhysicWorld();
 
-		Contrals Ctrl;
+		Sources::Instance()->LoadImages("res/textures/star.png", renderer); // Ô¤¼ÓÔØÎÆÀí: 0
+        window->SetClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-		Ctrl.SetSceneSize((float)Width, (float)Height);
-
-		Renderer renderer;
-
-		ShaderProgram shader;
-        shader.Add(GL_VERTEX_SHADER, "res/shaders/Vertex.shader");
-        shader.Add(GL_FRAGMENT_SHADER, "res/shaders/Fragment.shader");
-		shader.Link();
-        Texture texture1("res/textures/star.png");
-        Texture texture2("res/textures/pic1.png");
-        texture1.Bind(0);
-        texture2.Bind(1);
-		shader.SetUniformMat4f("u_proj", Ctrl.GetSceneMat());
-		shader.SetUniformMat4f("u_view", glm::translate(glm::mat4(1.0f), glm::vec3(0.0f)));
-        int l[2] = { 0, 1 };
-        shader.SetUniform1iv("u_Textures", 2, l);
-        shader.SetUniformBlock("u_TransForm", 0);
-
-        VertexBufferLayout layout;
-		layout.Push<float>(2, GL_FALSE);
-		layout.Push<float>(4, GL_FALSE);
-		layout.Push<float>(2, GL_FALSE);
-		layout.Push<float>(1, GL_FALSE);
-		std::vector<Models*> modelsSource = std::vector<Models*>();
-        {
-            Models* m;
-            LoadModelsFromJson("res/models/models.json", "stars", &layout, &shader, m);
-			modelsSource.push_back(m);
-        }
-		std::vector<Models*> models = std::vector<Models*>();
-		for (int i = 0; i < 9; i++)
-        {
-            models.push_back(new Models(*modelsSource[0], &layout));
-        }
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 3; j++)
-            {
-                models[i * 3 + j]->MoveTo((float)(i+1) * (200.f) + randomDevice.Float(-30, 30), (float)(j + 0) * 200.f + randomDevice.Float(-30, 30));
-				physicWorld.AddCircle(*models[i * 3 + j]);
-            }
-        }
-
-        ImGui::CreateContext();
-        ImGui_ImplGlfwGL3_Init(window.GetWindow(), true);
-        ImGui::StyleColorsDark();
-
+        renderer->SendToGPU();
         test::Test* currentTest = nullptr;
-        test::TestMenu* testMenu = new test::TestMenu(currentTest);
-        currentTest = testMenu;
+        test::TestMenu* testMenu = nullptr;
+        TestInitGui(*window, testMenu, currentTest);
 
-        testMenu->RegisterTest<test::TestScene>("Test Scene");
-
-        /*float view_X = 0.0f;
-        float view_Y = 0.0f;
-        float view_moveV = 1.5f;
-        float followSapce = 100.0f;
-        bool followPoint = true;
-        float followSpeed = 0.1f;
-        float x = 0.0f, y = 0.0f;*/
-        while (!window.ShouldClose())
+        double deltaTime;
+        while (window->Loop(deltaTime))
         {
-            /* Render here */
-            ImGui_ImplGlfwGL3_NewFrame();
-            if (currentTest) {
-                ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-                currentTest->OnUpdate(&models, 0.0f);
-                currentTest->OnRender();
-                currentTest->OnImGuiRender();
-                if (currentTest != testMenu && ImGui::Button("<-")) {
-                    delete currentTest;
-                    currentTest = testMenu;
-                }
-            }
-			physicWorld.Step(0.05);
-            for (auto& m : models)
-            {
-				m->UpdatePhysicFromModel();
-                m->Draw(&renderer);
-            }
-
-            ImGui::Render();
-            ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
-            window.End();
+            /*rightBar->GetWorldPosition(pos);
+            pos.x += 50.0f * deltaTime;
+			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2; 
+            rightBar->SetWorldPosition(pos);*/
+            DEBUG_RUN(TestGui(nullptr, testMenu, currentTest));
+            window->LoopEnd();
             /*if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
                 followPoint = false;
                 Vs[26].position[0] = Vs[26].position[0] + view_moveV;
@@ -193,11 +169,12 @@ int main(void)
                 }
             }*/
         }
-        delete currentTest;
         if (currentTest != testMenu)
             delete testMenu;
+        delete currentTest;
         ImGui_ImplGlfwGL3_Shutdown();
         ImGui::DestroyContext();
+		window->LoopEnd();
     }
     return 0;
 }

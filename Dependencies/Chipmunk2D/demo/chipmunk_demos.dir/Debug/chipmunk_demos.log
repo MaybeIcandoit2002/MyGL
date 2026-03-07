@@ -1,0 +1,42 @@
+﻿  Building Custom Rule D:/CodeSpaces/vendor/Chipmunk2D-master/demo/CMakeLists.txt
+  Bench.c
+  Buoyancy.c
+  Chains.c
+  ChipmunkDebugDraw.c
+  ChipmunkDemo.c
+  ChipmunkDemoTextSupport.c
+  ContactGraph.c
+  Convex.c
+  Crane.c
+  Joints.c
+  LogoSmash.c
+  OneWay.c
+  Planet.c
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDebugDraw.c(300,54): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDebugDraw.c(301,51): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDebugDraw.c(306,13): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemo.c(202,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemo.c(248,2): warning C4996: 'sprintf': This function or variable may be unsafe. Consider using sprintf_s instead. To disable deprecation, use _CRT_SECURE_NO_WARNINGS. See online help for details.
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemo.c(273,44): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemoTextSupport.c(247,54): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemoTextSupport.c(248,51): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+D:\CodeSpaces\vendor\Chipmunk2D-master\demo\ChipmunkDemoTextSupport.c(253,13): warning C4267: “函数”: 从“size_t”转换到“int”，可能丢失数据
+  Player.c
+  Plink.c
+  Pump.c
+  PyramidStack.c
+  PyramidTopple.c
+  Query.c
+  Shatter.c
+  正在生成代码...
+  正在编译...
+  Slice.c
+  Springies.c
+  Sticky.c
+  Tank.c
+  TheoJansen.c
+  Tumble.c
+  Unicycle.c
+  sokol.c
+  正在生成代码...
+  chipmunk_demos.vcxproj -> D:\CodeSpaces\vendor\Chipmunk2D-master\demo\Debug\chipmunk_demos.exe

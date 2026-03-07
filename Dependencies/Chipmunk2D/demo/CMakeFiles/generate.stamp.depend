@@ -1,0 +1,5 @@
+# CMake generation dependency list for this directory.
+B:/app/CMake/share/cmake-3.28/Modules/FindOpenGL.cmake
+B:/app/CMake/share/cmake-3.28/Modules/FindPackageHandleStandardArgs.cmake
+B:/app/CMake/share/cmake-3.28/Modules/FindPackageMessage.cmake
+D:/CodeSpaces/vendor/Chipmunk2D-master/demo/CMakeLists.txt
