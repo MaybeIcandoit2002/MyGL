@@ -42,6 +42,7 @@ public:
 	~Texture();
 	void Bind(uint32_t slot = 0) const;
 	void Unbind() const;
+	inline uint32_t GetId() const { return id; }
 };
 class Shader
 {
@@ -130,6 +131,7 @@ struct UniformData
 	};
 	glm::vec4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	glm::vec4 uvTransform = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glm::vec4 texIndex = { -1.0f, 0.0f, 0.0f, 0.0f };
 };
 
 class Renderer
@@ -220,6 +222,11 @@ public:
 	 * 使用三角形图元,无符号整型索引。
 	 */
 	ShaderProgram* GetShader() const { return shader; }
+	inline uint32_t GetTextureNativeId(uint32_t slot) const
+	{
+		if (slot >= textures.size()) return 0;
+		return textures[slot].GetId();
+	}
 private:
 	/**
 	 * @brief 配置 2D 渲染状态

@@ -1,0 +1,46 @@
+{
+  "box": {
+    "mesh": "box",
+    "size": [ 50, 50 ],
+    "color": [ 0.0, 0.0, 1.0, 1.0 ],
+    "slot": "res/textures/box.png",
+    "shape": "box",
+    "collider": [ 1, 1 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "circle": {
+    "mesh": "circle",
+    "size": [ 1, 1 ],
+    "color": [ 1.0, 1.0, 1.0, 0.0 ],
+    "slot": "res/textures/circle.png",
+    "shape": "circle",
+    "collider": [ 0.4 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "ground": {
+    "mesh": "box",
+    "size": [ 1000, 10 ],
+    "color": [ 0.0, 0.0, 0.0, 1.0 ],
+    "slot": "res/textures/ground.png",
+    "shape": "box",
+    "collider": [ 1, 1 ],
+    "mass": -1,
+    "friction": 0.2,
+    "restitution": 0.2
+  },
+  "car": {
+    "mesh": "box",
+    "size": [ 120, 80 ],
+    "color": [ 0.0, 0.0, 0.0, 0.0 ],
+    "slot": "res/textures/car.png",
+    "shape": "box",
+    "collider": [ 1, 1 ],
+    "mass": 1,
+    "friction": 0.2,
+    "restitution": 0.2
+  }
+}

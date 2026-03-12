@@ -1,0 +1,204 @@
+{
+  "global": {
+    "autoHideEditProperties": true,
+    "clearColor": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "gravity": [
+      0.0,
+      -9.800000190734863
+    ],
+    "jointLineColor": [
+      1.0,
+      0.8600000143051147,
+      0.3100000023841858,
+      1.0
+    ],
+    "jointLineThickness": 2.0,
+    "kineticFrictionCoeff": 0.800000011920929,
+    "rootColor": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "running": false,
+    "slipSpeedThreshold": 0.5,
+    "staticFrictionCoeff": 1.2000000476837158,
+    "viewCenter": [
+      -26.607295989990234,
+      12.362836837768555
+    ],
+    "viewScale": 1.3000000715255737,
+    "windowScale": 1.399999976158142
+  },
+  "joints": [
+    {
+      "aId": 4,
+      "anchorA": [
+        0.0,
+        0.0
+      ],
+      "anchorB": [
+        0.0,
+        0.0
+      ],
+      "bId": 7,
+      "distance": 224.75364685058594,
+      "id": 19,
+      "type": 0
+    },
+    {
+      "aId": 4,
+      "anchorA": [
+        0.0,
+        0.0
+      ],
+      "anchorB": [
+        0.0,
+        0.0
+      ],
+      "bId": 8,
+      "distance": 301.99041748046875,
+      "id": 20,
+      "type": 0
+    }
+  ],
+  "objects": [
+    {
+      "angularVelocity": 0.0,
+      "bodyType": 2,
+      "color": [
+        0.0,
+        0.0,
+        1.0,
+        1.0
+      ],
+      "enabled": true,
+      "friction": 0.20000000298023224,
+      "hasPhysicBody": true,
+      "id": 4,
+      "name": "box",
+      "parentId": 0,
+      "physicMass": 1.0,
+      "physicSize1": 1.0,
+      "physicSize2": 1.0,
+      "position": [
+        -1.5384788513183594,
+        228.46153259277344
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.20000000298023224,
+      "rotation": 0.0,
+      "scale": [
+        198.00001525878906,
+        50.0
+      ],
+      "shapeType": 1,
+      "templateName": "box",
+      "textureSlot": -1,
+      "velocity": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "angularVelocity": 0.0,
+      "bodyType": 0,
+      "color": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "enabled": true,
+      "friction": 0.20000000298023224,
+      "hasPhysicBody": true,
+      "id": 7,
+      "name": "circle",
+      "parentId": 0,
+      "physicMass": 1.0,
+      "physicSize1": 0.4000000059604645,
+      "physicSize2": 0.0,
+      "position": [
+        152.30767822265625,
+        64.6153793334961
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.20000000298023224,
+      "rotation": 0.0,
+      "scale": [
+        50.0,
+        50.0
+      ],
+      "shapeType": 0,
+      "templateName": "circle",
+      "textureSlot": 2,
+      "velocity": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "angularVelocity": 0.0,
+      "bodyType": 0,
+      "color": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "enabled": true,
+      "friction": 0.20000000298023224,
+      "hasPhysicBody": true,
+      "id": 8,
+      "name": "circle",
+      "parentId": 0,
+      "physicMass": 1.0,
+      "physicSize1": 0.4000000059604645,
+      "physicSize2": 0.0,
+      "position": [
+        206.15382385253906,
+        9.230769157409668
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.20000000298023224,
+      "rotation": 0.0,
+      "scale": [
+        50.0,
+        50.0
+      ],
+      "shapeType": 0,
+      "templateName": "circle",
+      "textureSlot": 2,
+      "velocity": [
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}
