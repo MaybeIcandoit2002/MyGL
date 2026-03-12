@@ -14,12 +14,17 @@ private:
 	PhysicWorld* physicWorld;
 	Renderer* renderer;
 	glm::vec2 windowSize;
+	glm::vec2 defaultWindowSize;
 	glm::vec2 lastWindowSize;
 	glm::vec4 clearColor;
 	Component* rootComponent;
 	double lastTime;
+	float viewScale;
+	float windowScale;
+	void RefreshProjection();
 public:
 	bool running;
+	bool changeSelectedComponent;
 	Component* selectedComponent;
 
 	MyWindow(int width, int height, const char* title);
@@ -33,9 +38,14 @@ public:
 	inline Component* GetRootComponent() { return rootComponent; }
 	inline float GetWidth() { return windowSize[0]; }
 	inline float GetHeight() { return windowSize[1]; }
+	inline float GetViewScale() const { return viewScale; }
+	inline float GetWindowScale() const { return windowScale; }
+	void SetViewScale(float scale);
+	void SetWindowScale(float scale);
 
 	bool Loop(double& deltaTime);
 	void LoopEnd() { glfwSwapBuffers(window); glfwPollEvents(); }
 	void BeforeUpdate();
 	void Update();
+	void DrawColliderOutline();
 };

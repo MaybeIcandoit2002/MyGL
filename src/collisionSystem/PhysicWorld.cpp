@@ -1,17 +1,27 @@
 #include "PhysicWorld.h"
 
+#include <cmath>
+
 PhysicWorld* PhysicWorld::instance = nullptr;
 
 PhysicWorld::PhysicWorld(cpFloat width, cpFloat height, cpFloat elasticity, cpFloat friction, cpFloat thickness)
-	: width(width), height(height), boundaryElasticity(elasticity), boundaryFriction(friction), boundaryThickness(thickness)
+	: width(width), height(height), boundaryElasticity(elasticity), boundaryFriction(friction), boundaryThickness(thickness),
+	staticFrictionCoeff(1.2f), kineticFrictionCoeff(1.0f), slipSpeedThreshold(0.5f)
 {
     m_space = cpSpaceNew();
     staticBody = cpSpaceGetStaticBody(m_space);
+
+    cpCollisionHandler* defaultHandler = cpSpaceAddDefaultCollisionHandler(m_space);
+    defaultHandler->preSolveFunc = CollisionPreSolve;
+    defaultHandler->userData = this;
+
+	const cpFloat halfW = width * 0.5f;
+	const cpFloat halfH = height * 0.5f;
     
-    topBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, height), cpv(width, height), thickness);
-	bottomBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, 0), cpv(width, 0), thickness);
-	leftBoundaryLine = cpSegmentShapeNew(staticBody, cpv(0, 0), cpv(0, height), thickness);
-    rightBoundaryLine = cpSegmentShapeNew(staticBody, cpv(width, 0), cpv(width, height), thickness);
+	topBoundaryLine = cpSegmentShapeNew(staticBody, cpv(-halfW, halfH), cpv(halfW, halfH), thickness);
+	bottomBoundaryLine = cpSegmentShapeNew(staticBody, cpv(-halfW, -halfH), cpv(halfW, -halfH), thickness);
+	leftBoundaryLine = cpSegmentShapeNew(staticBody, cpv(-halfW, -halfH), cpv(-halfW, halfH), thickness);
+	rightBoundaryLine = cpSegmentShapeNew(staticBody, cpv(halfW, -halfH), cpv(halfW, halfH), thickness);
 	cpShapeSetElasticity(topBoundaryLine, elasticity);
     cpShapeSetElasticity(bottomBoundaryLine, elasticity);
     cpShapeSetElasticity(leftBoundaryLine, elasticity);
@@ -26,6 +36,45 @@ PhysicWorld::PhysicWorld(cpFloat width, cpFloat height, cpFloat elasticity, cpFl
 	cpSpaceAddShape(m_space, rightBoundaryLine);
     
     cpSpaceSetGravity(m_space, cpv(0, 9.8));
+}
+
+cpBool PhysicWorld::CollisionPreSolve(cpArbiter* arb, cpSpace* space, cpDataPointer userData)
+{
+	(void)space;
+	PhysicWorld* world = static_cast<PhysicWorld*>(userData);
+	if (!world) return cpTrue;
+
+	cpShape* shapeA = nullptr;
+	cpShape* shapeB = nullptr;
+	cpArbiterGetShapes(arb, &shapeA, &shapeB);
+	if (!shapeA || !shapeB) return cpTrue;
+
+	const cpContactPointSet contactSet = cpArbiterGetContactPointSet(arb);
+	if (contactSet.count <= 0) return cpTrue;
+
+	const cpBody* bodyA = cpShapeGetBody(shapeA);
+	const cpBody* bodyB = cpShapeGetBody(shapeB);
+	const cpVect normal = cpArbiterGetNormal(arb);
+	const cpVect tangent = cpvperp(normal);
+
+	cpFloat maxTangentialSpeed = 0.0f;
+	for (int i = 0; i < contactSet.count; ++i)
+	{
+		const cpVect velocityA = cpBodyGetVelocityAtWorldPoint(bodyA, contactSet.points[i].pointA);
+		const cpVect velocityB = cpBodyGetVelocityAtWorldPoint(bodyB, contactSet.points[i].pointB);
+		const cpVect relativeVelocity = cpvsub(velocityB, velocityA);
+		const cpFloat tangentialSpeed = (cpFloat)std::fabs(cpvdot(relativeVelocity, tangent));
+		if (tangentialSpeed > maxTangentialSpeed)
+			maxTangentialSpeed = tangentialSpeed;
+	}
+
+	const cpFloat baseFriction = cpShapeGetFriction(shapeA) * cpShapeGetFriction(shapeB);
+	const cpFloat modelCoeff = (maxTangentialSpeed < world->slipSpeedThreshold)
+		? world->staticFrictionCoeff
+		: world->kineticFrictionCoeff;
+
+	cpArbiterSetFriction(arb, baseFriction * modelCoeff);
+	return cpTrue;
 }
 
 PhysicWorld::~PhysicWorld()

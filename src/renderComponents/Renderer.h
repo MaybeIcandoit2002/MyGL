@@ -130,6 +130,7 @@ struct UniformData
 	};
 	glm::vec4 color = { 0.0f, 0.0f, 0.0f, 0.0f };
 	glm::vec4 uvTransform = { 0.0f, 0.0f, 0.0f, 0.0f };
+	glm::vec4 texIndex = { -1.0f, 0.0f, 0.0f, 0.0f };
 };
 
 class Renderer

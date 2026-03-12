@@ -23,8 +23,24 @@ struct Mesh
     std::vector<uint32_t>* indices = nullptr;
 
     std::vector<UniformData> uniform;
+    std::vector<class Component*> owners;
 
     MeshBuffer transformBuffer = nullptr;
+};
+struct ComponentTemplate
+{
+    std::string name;
+    std::string meshName;
+    float scale1;
+    float scale2;
+    float* backgroundColor;
+    int textureSlot;
+    ShapeType shapeType;
+    float physicSize1;
+    float* physicSize2;
+    float physicMass;
+    float physicFriction;
+	float physicRestitution;
 };
 struct UITransform
 {
@@ -35,15 +51,18 @@ struct UITransform
 class Sources
 {
 private:
-    std::map<std::string, ImageProperty> images;
-    std::map<std::string, Mesh> meshs;
+	std::map<std::string, ImageProperty> images = {};
+    std::map<std::string, Mesh> meshs = {};
+	std::vector<ComponentTemplate> componentTemplates = {};
 public:
+    std::vector<ComponentTemplate>& GetComponentTemplate() { return componentTemplates; }
     bool HasImage(const std::string& imagePath) { return images.find(imagePath) != images.end(); }
     bool HasMesh(const std::string& meshName) { return meshs.find(meshName) != meshs.end(); }
     ImageProperty* GetImage(const std::string& imagePath) { return &images[imagePath]; }
     Mesh* GetMesh(const std::string& meshName) { return &meshs[meshName]; }
-    void LoadImages(const std::string imagePath, Renderer* renderer);
+    void LoadImages(const std::string& imagePath, Renderer* renderer);
     void LoadMeshsFromJson(const std::string& filename, Renderer* renderer);
+	void LoadComponentFromJson(const std::string& filename);
     Mesh* CreateMesh(const std::string& name, int vCount, float* vertecis, int iCount, uint32_t indices, Renderer* renderer);
     void DeleteMesh(const std::string& meshName) {
         delete meshs[meshName].vertexs;
