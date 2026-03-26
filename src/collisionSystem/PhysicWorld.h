@@ -1,5 +1,4 @@
 #pragma once
-
 #include <chipmunk.h>
 #include <vector>
 #include <unordered_map>
@@ -77,6 +76,13 @@ public:
     bool ResetFlexibleJoint(JointId jointId);
     bool SetSpringParams(JointId jointId, cpFloat restLength, cpFloat stiffness, cpFloat damping);
     void SyncFixedLengthJointsByBody(cpBody* body);
+
+    void SetStaticFrictionCoeff(cpFloat coeff) { staticFrictionCoeff = coeff; }
+    void SetKineticFrictionCoeff(cpFloat coeff) { kineticFrictionCoeff = coeff; }
+    void SetSlipSpeedThreshold(cpFloat threshold) { slipSpeedThreshold = threshold; }
+    cpFloat GetStaticFrictionCoeff() const { return staticFrictionCoeff; }
+    cpFloat GetKineticFrictionCoeff() const { return kineticFrictionCoeff; }
+    cpFloat GetSlipSpeedThreshold() const { return slipSpeedThreshold; }
 
     void SetStaticFrictionCoeff(cpFloat coeff) { staticFrictionCoeff = coeff; }
     void SetKineticFrictionCoeff(cpFloat coeff) { kineticFrictionCoeff = coeff; }
