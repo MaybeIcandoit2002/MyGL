@@ -1,5 +1,4 @@
 #pragma once
-
 #include <chipmunk.h>
 #include <vector>
 #include <unordered_map>
