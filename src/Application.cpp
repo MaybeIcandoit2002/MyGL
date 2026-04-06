@@ -24,6 +24,7 @@
 #include "tests/SearchRoot.h"
 #include "tests/Setting.h"
 #include "tests/GlobalPhysicParams.h"
+#include "tests/ConfirmPopup.h"
 
 inline static const ComponentTemplate* FindTemplateByName(const std::string& name)
 {
@@ -153,6 +154,30 @@ inline static std::string ResolveScenePathForLoad(const std::string& sceneName)
     return jsonPath;
 }
 
+inline static bool DeleteSceneByName(const std::string& sceneName)
+{
+    const std::string normalized = NormalizeSceneName(sceneName);
+    bool removed = false;
+
+    const std::string jsonPath = "res/scenes/" + normalized + ".json";
+    const std::wstring wjsonPath = Utf8ToWide(jsonPath);
+    if (!wjsonPath.empty() && _waccess(wjsonPath.c_str(), 0) == 0)
+    {
+        if (_wremove(wjsonPath.c_str()) == 0)
+            removed = true;
+    }
+
+    const std::string rawPath = "res/scenes/" + normalized;
+    const std::wstring wrawPath = Utf8ToWide(rawPath);
+    if (!wrawPath.empty() && _waccess(wrawPath.c_str(), 0) == 0)
+    {
+        if (_wremove(wrawPath.c_str()) == 0)
+            removed = true;
+    }
+
+    return removed;
+}
+
 inline static std::vector<std::string> GetSceneNames()
 {
     std::vector<std::string> names;
@@ -203,18 +228,38 @@ inline static Component* CreateComponentByTemplate(MyWindow* window, const Compo
     child->SetScale(ct.scale1, ct.scale2);
     child->SetBackgroundColor(ct.backgroundColor[0], ct.backgroundColor[1], ct.backgroundColor[2], ct.backgroundColor[3]);
 
+    bool physicsInited = false;
     switch (ct.shapeType)
     {
     case ShapeType::Circle:
         child->InitPhysicProperty(ct.physicSize1, ct.physicMass, ct.physicRestitution, ct.physicFriction);
+        physicsInited = true;
         break;
     case ShapeType::Box:
-        child->InitPhysicProperty(ct.physicSize1, ct.physicSize2[0], ct.physicMass, ct.physicRestitution, ct.physicFriction);
+        if (ct.physicSize2)
+        {
+            child->InitPhysicProperty(ct.physicSize1, ct.physicSize2[0], ct.physicMass, ct.physicRestitution, ct.physicFriction);
+            physicsInited = true;
+        }
         break;
     case ShapeType::Polygon:
-        child->InitPhysicProperty(static_cast<int>(ct.physicSize1), ct.physicSize2, ct.physicMass, ct.physicRestitution, ct.physicFriction);
+        if (ct.physicSize2)
+        {
+            child->InitPhysicProperty(static_cast<int>(ct.physicSize1), ct.physicSize2, ct.physicMass, ct.physicRestitution, ct.physicFriction);
+            physicsInited = true;
+        }
+        break;
+    default:
         break;
     }
+
+    if (!physicsInited || !child->HasPhysicsShape())
+    {
+        parent->RemoveChild(child);
+        delete child;
+        return nullptr;
+    }
+
     child->SetSensor(true);
     return child;
 }
@@ -238,6 +283,24 @@ inline static void CollectSceneNodes(Component* node, std::uint64_t parentId, nl
     obj["parentId"] = parentId;
     obj["templateName"] = node->templateName.empty() ? node->name : node->templateName;
     obj["name"] = node->name;
+    obj["isDescriptionComponent"] = node->isDescriptionComponent;
+    if (node->isDescriptionComponent)
+    {
+        obj["descriptionText"] = node->descriptionText;
+        obj["descriptionOffset"] = { node->descriptionOffset.x, node->descriptionOffset.y };
+        obj["descriptionShowParams"] = node->descriptionShowParams;
+        obj["descriptionShowParamName"] = node->descriptionShowParamName;
+        obj["descriptionShowParamPosition"] = node->descriptionShowParamPosition;
+        obj["descriptionShowParamScale"] = node->descriptionShowParamScale;
+        obj["descriptionShowParamRotation"] = node->descriptionShowParamRotation;
+        obj["descriptionShowParamPhysMass"] = node->descriptionShowParamPhysMass;
+        obj["descriptionShowParamPhysFriction"] = node->descriptionShowParamPhysFriction;
+        obj["descriptionShowParamPhysRestitution"] = node->descriptionShowParamPhysRestitution;
+        obj["descriptionShowParamPhysVelocity"] = node->descriptionShowParamPhysVelocity;
+        obj["descriptionShowParamPhysAngularVelocity"] = node->descriptionShowParamPhysAngularVelocity;
+        obj["descriptionFontSize"] = node->descriptionFontSize;
+        obj["descriptionLineSpacing"] = node->descriptionLineSpacing;
+    }
     obj["enabled"] = node->enabled;
     obj["position"] = { pos.x, pos.y };
     obj["scale"] = { scale.x, scale.y };
@@ -294,6 +357,7 @@ inline static void SaveScene(MyWindow* window, const std::string& path)
         {"viewCenter", { viewCenter.x, viewCenter.y }},
         {"windowScale", window->GetWindowScale()},
         {"autoHideEditProperties", window->GetAutoHideEditProperties()},
+        {"enableConfirmPopup", window->GetEnableConfirmPopup()},
         {"jointLineColor", { jointLineColor.r, jointLineColor.g, jointLineColor.b, jointLineColor.a }},
         {"jointLineThickness", window->GetJointLineThickness()},
         {"gravity", { static_cast<float>(gravity.x), static_cast<float>(gravity.y) }},
@@ -384,18 +448,55 @@ inline static void LoadScene(MyWindow* window, const std::string& path)
                 if (!parent)
                     continue;
 
+                const bool isDescriptionComponent = obj.value("isDescriptionComponent", false);
+
                 std::string templateName = obj.value("templateName", obj.value("name", std::string()));
                 const ComponentTemplate* ct = FindTemplateByName(templateName);
-                if (!ct) continue;
-
-                Component* node = CreateComponentByTemplate(window, *ct, parent);
+                Component* node = nullptr;
+                if (isDescriptionComponent)
+                {
+                    node = parent->CreateOrGetDescriptionChild();
+                    if (node)
+                    {
+                        node->descriptionText = obj.value("descriptionText", std::string("Description"));
+                        if (obj.contains("descriptionOffset") && obj["descriptionOffset"].is_array() && obj["descriptionOffset"].size() >= 2)
+                            node->descriptionOffset = glm::vec2(obj["descriptionOffset"][0].get<float>(), obj["descriptionOffset"][1].get<float>());
+                        else if (obj.contains("position") && obj["position"].is_array() && obj["position"].size() >= 2)
+                            node->descriptionOffset = glm::vec2(obj["position"][0].get<float>(), obj["position"][1].get<float>());
+                        else
+                            node->descriptionOffset = glm::vec2(0.0f, 40.0f);
+                        node->descriptionShowParams = obj.value("descriptionShowParams", false);
+                        node->descriptionShowParamName = obj.value("descriptionShowParamName", true);
+                        node->descriptionShowParamPosition = obj.value("descriptionShowParamPosition", true);
+                        node->descriptionShowParamScale = obj.value("descriptionShowParamScale", false);
+                        node->descriptionShowParamRotation = obj.value("descriptionShowParamRotation", false);
+                        const bool legacyShowPhys = obj.value("descriptionShowPhysicsParams", false);
+                        node->descriptionShowParamPhysMass = obj.value("descriptionShowParamPhysMass", legacyShowPhys);
+                        node->descriptionShowParamPhysFriction = obj.value("descriptionShowParamPhysFriction", legacyShowPhys);
+                        node->descriptionShowParamPhysRestitution = obj.value("descriptionShowParamPhysRestitution", legacyShowPhys);
+                        node->descriptionShowParamPhysVelocity = obj.value("descriptionShowParamPhysVelocity", legacyShowPhys);
+                        node->descriptionShowParamPhysAngularVelocity = obj.value("descriptionShowParamPhysAngularVelocity", legacyShowPhys);
+                        node->descriptionFontSize = obj.value("descriptionFontSize", 16.0f);
+                        node->descriptionLineSpacing = obj.value("descriptionLineSpacing", 2.0f);
+                        node->templateName.clear();
+                        node->SetTextureSlot(-1);
+                        node->SetSensor(true);
+                    }
+                }
+                else
+                {
+                    if (!ct) continue;
+                    node = CreateComponentByTemplate(window, *ct, parent);
+                }
                 if (!node) continue;
 
                 node->SetStableId(id);
                 node->templateName = templateName;
                 node->name = obj.value("name", templateName);
                 node->enabled = obj.value("enabled", true);
-                node->shapeType = static_cast<ShapeType>(obj.value("shapeType", static_cast<int>(ct->shapeType)));
+                node->shapeType = isDescriptionComponent
+                    ? ShapeType::Box
+                    : static_cast<ShapeType>(obj.value("shapeType", static_cast<int>(ct->shapeType)));
 
                 glm::vec2 pos(obj["position"][0].get<float>(), obj["position"][1].get<float>());
                 glm::vec2 scale(obj["scale"][0].get<float>(), obj["scale"][1].get<float>());
@@ -406,17 +507,25 @@ inline static void LoadScene(MyWindow* window, const std::string& path)
                 node->SetScale(scale);
                 node->SetRotation(rot);
                 node->SetBackgroundColor(color);
-                node->SetTextureSlot(obj.value("textureSlot", ct->textureSlot));
+                if (isDescriptionComponent)
+                {
+                    node->SetTextureSlot(-1);
+                    node->SetSensor(true);
+                }
+                else
+                {
+                    node->SetTextureSlot(obj.value("textureSlot", ct->textureSlot));
 
-                node->physicMass = obj.value("physicMass", ct->physicMass);
-                node->SetPhysicSize(obj.value("physicSize1", ct->physicSize1), obj.value("physicSize2", ct->physicSize2[0]));
-                node->SetFriction(obj.value("friction", ct->physicFriction));
-                node->SetRestitution(obj.value("restitution", ct->physicRestitution));
-                node->SetPhysicRelativePosition(obj["relativePos"][0].get<float>(), obj["relativePos"][1].get<float>());
-                node->SetPhysicRelativeScale(obj["relativeScale"][0].get<float>(), obj["relativeScale"][1].get<float>());
-                node->SetSensor(!obj.value("hasPhysicBody", false));
+                    node->physicMass = obj.value("physicMass", ct->physicMass);
+                    node->SetPhysicSize(obj.value("physicSize1", ct->physicSize1), obj.value("physicSize2", ct->physicSize2[0]));
+                    node->SetFriction(obj.value("friction", ct->physicFriction));
+                    node->SetRestitution(obj.value("restitution", ct->physicRestitution));
+                    node->SetPhysicRelativePosition(obj["relativePos"][0].get<float>(), obj["relativePos"][1].get<float>());
+                    node->SetPhysicRelativeScale(obj["relativeScale"][0].get<float>(), obj["relativeScale"][1].get<float>());
+                    node->SetSensor(!obj.value("hasPhysicBody", false));
+                }
 
-                if (node->GetBody())
+                if (!isDescriptionComponent && node->GetBody())
                 {
                     const int bodyType = obj.value("bodyType", static_cast<int>(cpBodyGetType(node->GetBody())));
                     if (bodyType == static_cast<int>(CP_BODY_TYPE_STATIC))
@@ -492,6 +601,8 @@ inline static void LoadScene(MyWindow* window, const std::string& path)
             window->SetViewCenter(glm::vec2(g["viewCenter"][0].get<float>(), g["viewCenter"][1].get<float>()));
         if (g.contains("autoHideEditProperties"))
             window->SetAutoHideEditProperties(g["autoHideEditProperties"].get<bool>());
+        if (g.contains("enableConfirmPopup"))
+            window->SetEnableConfirmPopup(g["enableConfirmPopup"].get<bool>());
         if (g.contains("jointLineColor"))
             window->SetJointLineColor(glm::vec4(g["jointLineColor"][0].get<float>(), g["jointLineColor"][1].get<float>(), g["jointLineColor"][2].get<float>(), g["jointLineColor"][3].get<float>()));
         if (g.contains("jointLineThickness"))
@@ -528,6 +639,49 @@ inline static bool TryLoadChineseFont(ImGuiIO& io, const char* path, float fontS
     return true;
 }
 
+inline static void ConfigureEditorImGuiStyle()
+{
+    ImGui::StyleColorsDark();
+
+    ImGuiStyle& style = ImGui::GetStyle();
+    style.WindowRounding = 8.0f;
+    style.ChildRounding = 6.0f;
+    style.FrameRounding = 6.0f;
+    style.PopupRounding = 6.0f;
+    style.ScrollbarRounding = 8.0f;
+    style.GrabRounding = 6.0f;
+    style.WindowBorderSize = 1.0f;
+    style.FrameBorderSize = 0.0f;
+    style.WindowPadding = ImVec2(12.0f, 10.0f);
+    style.FramePadding = ImVec2(10.0f, 6.0f);
+    style.ItemSpacing = ImVec2(8.0f, 8.0f);
+    style.ItemInnerSpacing = ImVec2(6.0f, 4.0f);
+
+    ImVec4* colors = style.Colors;
+    colors[ImGuiCol_Text] = ImVec4(0.93f, 0.95f, 0.98f, 1.00f);
+    colors[ImGuiCol_TextDisabled] = ImVec4(0.55f, 0.60f, 0.66f, 1.00f);
+    colors[ImGuiCol_WindowBg] = ImVec4(0.10f, 0.11f, 0.14f, 0.95f);
+    colors[ImGuiCol_ChildBg] = ImVec4(0.13f, 0.14f, 0.18f, 0.75f);
+    colors[ImGuiCol_PopupBg] = ImVec4(0.11f, 0.12f, 0.16f, 0.96f);
+    colors[ImGuiCol_Border] = ImVec4(0.26f, 0.31f, 0.38f, 0.55f);
+    colors[ImGuiCol_Separator] = ImVec4(0.30f, 0.36f, 0.44f, 0.55f);
+
+    colors[ImGuiCol_FrameBg] = ImVec4(0.17f, 0.20f, 0.26f, 0.70f);
+    colors[ImGuiCol_FrameBgHovered] = ImVec4(0.22f, 0.26f, 0.34f, 0.85f);
+    colors[ImGuiCol_FrameBgActive] = ImVec4(0.26f, 0.31f, 0.40f, 1.00f);
+
+    colors[ImGuiCol_Button] = ImVec4(0.20f, 0.35f, 0.58f, 0.78f);
+    colors[ImGuiCol_ButtonHovered] = ImVec4(0.26f, 0.46f, 0.74f, 0.92f);
+    colors[ImGuiCol_ButtonActive] = ImVec4(0.18f, 0.33f, 0.56f, 1.00f);
+
+    colors[ImGuiCol_Header] = ImVec4(0.19f, 0.34f, 0.56f, 0.65f);
+    colors[ImGuiCol_HeaderHovered] = ImVec4(0.26f, 0.46f, 0.74f, 0.86f);
+    colors[ImGuiCol_HeaderActive] = ImVec4(0.22f, 0.39f, 0.64f, 1.00f);
+    colors[ImGuiCol_CheckMark] = ImVec4(0.46f, 0.72f, 0.97f, 1.00f);
+    colors[ImGuiCol_SliderGrab] = ImVec4(0.46f, 0.72f, 0.97f, 0.80f);
+    colors[ImGuiCol_SliderGrabActive] = ImVec4(0.57f, 0.80f, 1.00f, 1.00f);
+}
+
 inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu) {
     ImGui::CreateContext();
     ImGui_ImplGlfwGL3_Init(window.GetWindow(), false);
@@ -541,26 +695,33 @@ inline static void TestInitGui(MyWindow& window, test::TestMenu*& testMenu) {
     if (!chineseFontLoaded)
         io.Fonts->AddFontDefault();
 
-    ImGui::StyleColorsDark();
+    ConfigureEditorImGuiStyle();
 
     testMenu = new test::TestMenu(&window);
     testMenu->RegisterTest<test::AddNewObject>("Add New Object");
     testMenu->RegisterTest<test::SearchRoot>("RootComponent");
     testMenu->RegisterHiddenTest<test::EditProperties>("Edit Properties");
-    testMenu->RegisterTest<test::GlobalPhysicParams>("Global Physic Params");
+    testMenu->RegisterHiddenTest<test::GlobalPhysicParams>("Global Physic Params");
     testMenu->RegisterTest<test::Setting>("Setting");
 }
 
-inline static void TestGui(const void* testObject, test::TestMenu* testMenu) {
-    ImGui_ImplGlfwGL3_NewFrame();
-	MyWindow* window = testMenu->window;
+struct PhysicsPanelState
+{
+    bool timerEnabled = true;
+    double physicsRunTimer = 0.0;
+    float countdownSetSeconds = 10.0f;
+    float countdownRemainingSeconds = 0.0f;
+    bool countdownActive = false;
+    char sceneNameBuffer[64] = "runtime_scene";
+    int selectedSceneIndex = -1;
+    bool deleteScenePopupRequested = false;
+    std::string pendingDeleteSceneName;
+};
 
-	static bool timerEnabled = true;
-	static double physicsRunTimer = 0.0;
-	static float countdownSetSeconds = 10.0f;
-	static float countdownRemainingSeconds = 0.0f;
-	static bool countdownActive = false;
-
+class TestGuiUtils
+{
+public:
+    static void ClampWindowsToViewport()
     {
         ImGuiIO& io = ImGui::GetIO();
         ImGuiStyle& style = ImGui::GetStyle();
@@ -582,183 +743,255 @@ inline static void TestGui(const void* testObject, test::TestMenu* testMenu) {
         }
     }
 
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui::SetNextWindowBgAlpha(0.35f);
-    ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 12.0f, 12.0f), 0, ImVec2(1.0f, 0.0f));
-    ImGui::Begin("##ViewScaleOverlay", nullptr,
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_AlwaysAutoResize |
-        ImGuiWindowFlags_NoSavedSettings |
-        ImGuiWindowFlags_NoFocusOnAppearing |
-        ImGuiWindowFlags_NoNav |
-        ImGuiWindowFlags_NoMove);
-    char scaleLabel[64] = {};
-    snprintf(scaleLabel, sizeof(scaleLabel), "Scale: %.2fx", window->GetViewScale());
-    if (ImGui::SmallButton(scaleLabel))
+    static void RenderViewScaleOverlay(MyWindow* window)
     {
-        window->ResetView();
-    }
-    ImGui::End();
-
-	if (timerEnabled && window->running)
-	{
-		physicsRunTimer += ImGui::GetIO().DeltaTime;
-	}
-
-	if (countdownActive && window->running)
-	{
-		countdownRemainingSeconds -= ImGui::GetIO().DeltaTime;
-		if (countdownRemainingSeconds <= 0.0f)
-		{
-			countdownRemainingSeconds = 0.0f;
-			countdownActive = false;
-			window->running = false;
-		}
-	}
-
-	ImGui::SetNextWindowBgAlpha(0.35f);
-	ImGui::SetNextWindowPos(ImVec2(12.0f, 12.0f), 0, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("##PhysicsRunTimer", nullptr,
-		ImGuiWindowFlags_NoTitleBar |
-		ImGuiWindowFlags_NoResize |
-		ImGuiWindowFlags_NoScrollbar |
-		ImGuiWindowFlags_NoCollapse |
-		ImGuiWindowFlags_AlwaysAutoResize |
-		ImGuiWindowFlags_NoSavedSettings |
-		ImGuiWindowFlags_NoFocusOnAppearing |
-		ImGuiWindowFlags_NoNav);
-	ImGui::Text("Timer: %.2f s", physicsRunTimer);
-	ImGui::Checkbox("Enable Timer", &timerEnabled);
-	ImGui::SameLine();
-	if (ImGui::Button("Reset Timer"))
-	{
-		physicsRunTimer = 0.0;
-	}
-
-	ImGui::Separator();
-	ImGui::Text("Countdown");
-	if (window->GetSelectedComponent() == nullptr)
-	{
-		if (ImGui::DragFloat("Set Countdown (s)", &countdownSetSeconds, 0.1f, 0.1f, 36000.0f, "%.1f"))
-		{
-			if (countdownSetSeconds < 0.1f) countdownSetSeconds = 0.1f;
-		}
-		ImGui::Text("Remaining: %.2f s", countdownActive ? countdownRemainingSeconds : countdownSetSeconds);
-		if (!countdownActive)
-		{
-			if (ImGui::Button("Start Countdown"))
-			{
-				countdownRemainingSeconds = countdownSetSeconds;
-				countdownActive = true;
-			}
-		}
-		else
-		{
-			if (ImGui::Button("Stop Countdown"))
-			{
-				countdownActive = false;
-			}
-		}
-		ImGui::SameLine();
-		if (ImGui::Button("Reset Countdown"))
-		{
-			countdownActive = false;
-			countdownRemainingSeconds = countdownSetSeconds;
-		}
-	}
-	else
-	{
-		ImGui::TextDisabled("Countdown setup available only when no object is selected.");
-		ImGui::Text("Remaining: %.2f s", countdownActive ? countdownRemainingSeconds : countdownSetSeconds);
-	}
-
-    ImGui::Separator();
-    if (window->running)
-    {
-        if (ImGui::Button("Stop PhysicSystem Progress"))
+        ImGuiIO& io = ImGui::GetIO();
+        ImGui::SetNextWindowBgAlpha(0.35f);
+        ImGui::SetNextWindowPos(ImVec2(io.DisplaySize.x - 12.0f, 12.0f), 0, ImVec2(1.0f, 0.0f));
+        ImGui::Begin("##ViewScaleOverlay", nullptr,
+            ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoResize |
+            ImGuiWindowFlags_NoScrollbar |
+            ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_AlwaysAutoResize |
+            ImGuiWindowFlags_NoSavedSettings |
+            ImGuiWindowFlags_NoFocusOnAppearing |
+            ImGuiWindowFlags_NoNav |
+            ImGuiWindowFlags_NoMove);
+        char scaleLabel[64] = {};
+        snprintf(scaleLabel, sizeof(scaleLabel), "Scale: %.2fx", window->GetViewScale());
+        if (ImGui::SmallButton(scaleLabel))
         {
-            window->running = false;
+            window->ResetView();
         }
+        ImGui::End();
     }
-    else
+
+    static void UpdatePhysicsState(MyWindow* window, PhysicsPanelState& state)
     {
-        if (ImGui::Button("Run PhysicSystem Progress"))
+        if (state.timerEnabled && window->running)
         {
-            window->running = true;
+            state.physicsRunTimer += ImGui::GetIO().DeltaTime;
         }
-    }
-    if (!window->running && ImGui::Button("Pause One Step"))
-    {
-        window->GetPhysicWorld()->Step(1.0 / 60.0);
-    }
 
-    static char sceneNameBuffer[64] = "runtime_scene";
-    static int selectedSceneIndex = -1;
-
-    std::vector<std::string> sceneNames = GetSceneNames();
-    if (selectedSceneIndex >= static_cast<int>(sceneNames.size()))
-        selectedSceneIndex = sceneNames.empty() ? -1 : 0;
-
-    ImGui::Separator();
-    ImGui::InputText("Scene Name", sceneNameBuffer, IM_ARRAYSIZE(sceneNameBuffer));
-    const std::string sceneName = sceneNameBuffer;
-    const bool validSceneName = IsValidSceneName(sceneName);
-    if (!validSceneName)
-    {
-        ImGui::TextDisabled("Scene name: 1-64 chars, only [A-Z a-z 0-9 _ -]");
-    }
-
-    if (ImGui::Button("Save Scene"))
-    {
-        if (validSceneName)
+        if (state.countdownActive && window->running)
         {
-            SaveScene(window, BuildScenePath(sceneName));
-            sceneNames = GetSceneNames();
-            for (int i = 0; i < static_cast<int>(sceneNames.size()); ++i)
+            state.countdownRemainingSeconds -= ImGui::GetIO().DeltaTime;
+            if (state.countdownRemainingSeconds <= 0.0f)
             {
-                if (sceneNames[i] == sceneName)
-                {
-                    selectedSceneIndex = i;
-                    break;
-                }
+                state.countdownRemainingSeconds = 0.0f;
+                state.countdownActive = false;
+                window->running = false;
             }
         }
     }
 
-    const char* currentScenePreview = (selectedSceneIndex >= 0 && selectedSceneIndex < static_cast<int>(sceneNames.size()))
-        ? sceneNames[selectedSceneIndex].c_str()
-        : "<none>";
-
-    if (ImGui::BeginCombo("Load Scene", currentScenePreview))
+    static void RenderPhysicsPanel(MyWindow* window, PhysicsPanelState& state)
     {
-        for (int i = 0; i < static_cast<int>(sceneNames.size()); ++i)
+        PhysicWorld* world = window ? window->GetPhysicWorld() : nullptr;
+
+        ImGui::Text("Runtime");
+        if (window->running)
         {
-            const bool isSelected = (i == selectedSceneIndex);
-            if (ImGui::Selectable(sceneNames[i].c_str(), isSelected))
-                selectedSceneIndex = i;
-            if (isSelected)
-                ImGui::SetItemDefaultFocus();
+            if (ImGui::Button("Stop Physics"))
+            {
+                window->running = false;
+            }
         }
-        ImGui::EndCombo();
+        else
+        {
+            if (ImGui::Button("Run Physics"))
+            {
+                window->running = true;
+            }
+        }
+        ImGui::SameLine();
+        if (!window->running && ImGui::Button("Step"))
+        {
+            window->GetPhysicWorld()->Step(1.0 / 60.0);
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Global Common");
+        if (world)
+        {
+            cpVect gravity = world->GetGravity();
+            float gravityValue[2] = { static_cast<float>(gravity.x), static_cast<float>(gravity.y) };
+            if (ImGui::DragFloat2("Gravity", gravityValue, 0.1f, -100.0f, 100.0f))
+            {
+                world->SetGravity(cpv(gravityValue[0], gravityValue[1]));
+            }
+        }
+
+        Component* anchorA = window->GetBindingAnchor();
+        const char* anchorName = (!anchorA) ? "<none>" : (anchorA->name.empty() ? "<unnamed>" : anchorA->name.c_str());
+        ImGui::Text("Joint A: %s", anchorName);
+        ImGui::SameLine();
+        if (ImGui::SmallButton("Clear"))
+        {
+            window->ClearBindingAnchor();
+        }
+
+        ImGui::Separator();
+        ImGui::Text("Timer: %.2f s", state.physicsRunTimer);
+        ImGui::Checkbox("Enable Timer", &state.timerEnabled);
+        ImGui::SameLine();
+        if (ImGui::Button("Reset Timer"))
+        {
+            state.physicsRunTimer = 0.0;
+        }
+
+        ImGui::Text("Countdown");
+        if (window->GetSelectedComponent() == nullptr)
+        {
+            if (ImGui::DragFloat("Set Countdown (s)", &state.countdownSetSeconds, 0.1f, 0.1f, 36000.0f, "%.1f"))
+            {
+                if (state.countdownSetSeconds < 0.1f) state.countdownSetSeconds = 0.1f;
+            }
+            ImGui::Text("Remaining: %.2f s", state.countdownActive ? state.countdownRemainingSeconds : state.countdownSetSeconds);
+            if (!state.countdownActive)
+            {
+                if (ImGui::Button("Start Countdown"))
+                {
+                    state.countdownRemainingSeconds = state.countdownSetSeconds;
+                    state.countdownActive = true;
+                }
+            }
+            else
+            {
+                if (ImGui::Button("Stop Countdown"))
+                {
+                    state.countdownActive = false;
+                }
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Reset Countdown"))
+            {
+                state.countdownActive = false;
+                state.countdownRemainingSeconds = state.countdownSetSeconds;
+            }
+        }
+        else
+        {
+            ImGui::TextDisabled("Countdown setup available only when no object is selected.");
+            ImGui::Text("Remaining: %.2f s", state.countdownActive ? state.countdownRemainingSeconds : state.countdownSetSeconds);
+        }
+
+        std::vector<std::string> sceneNames = GetSceneNames();
+        if (state.selectedSceneIndex >= static_cast<int>(sceneNames.size()))
+            state.selectedSceneIndex = sceneNames.empty() ? -1 : 0;
+
+        ImGui::Separator();
+        ImGui::Text("Scene");
+        ImGui::InputText("Scene Name", state.sceneNameBuffer, IM_ARRAYSIZE(state.sceneNameBuffer));
+        const std::string sceneName = state.sceneNameBuffer;
+        const bool validSceneName = IsValidSceneName(sceneName);
+        if (!validSceneName)
+        {
+            ImGui::TextDisabled("Scene name: 1-64 chars, only [A-Z a-z 0-9 _ -]");
+        }
+
+        if (ImGui::Button("Save Scene"))
+        {
+            if (validSceneName)
+            {
+                SaveScene(window, BuildScenePath(sceneName));
+                sceneNames = GetSceneNames();
+                for (int i = 0; i < static_cast<int>(sceneNames.size()); ++i)
+                {
+                    if (sceneNames[i] == sceneName)
+                    {
+                        state.selectedSceneIndex = i;
+                        break;
+                    }
+                }
+            }
+        }
+
+        const char* currentScenePreview = (state.selectedSceneIndex >= 0 && state.selectedSceneIndex < static_cast<int>(sceneNames.size()))
+            ? sceneNames[state.selectedSceneIndex].c_str()
+            : "<none>";
+
+        if (ImGui::BeginCombo("Load Scene", currentScenePreview))
+        {
+            for (int i = 0; i < static_cast<int>(sceneNames.size()); ++i)
+            {
+                const bool isSelected = (i == state.selectedSceneIndex);
+                if (ImGui::Selectable(sceneNames[i].c_str(), isSelected))
+                    state.selectedSceneIndex = i;
+                if (isSelected)
+                    ImGui::SetItemDefaultFocus();
+            }
+            ImGui::EndCombo();
+        }
+
+        if (!window->running && state.selectedSceneIndex >= 0 && state.selectedSceneIndex < static_cast<int>(sceneNames.size()))
+        {
+            if (ImGui::Button("Load Selected Scene"))
+            {
+                LoadScene(window, ResolveScenePathForLoad(sceneNames[state.selectedSceneIndex]));
+            }
+            ImGui::SameLine();
+            if (ImGui::Button("Delete Selected Scene"))
+            {
+                const std::string selectedName = sceneNames[state.selectedSceneIndex];
+                if (window->GetEnableConfirmPopup())
+                {
+                    state.pendingDeleteSceneName = selectedName;
+                    state.deleteScenePopupRequested = true;
+                }
+                else
+                {
+                    DeleteSceneByName(selectedName);
+                    sceneNames = GetSceneNames();
+                    state.selectedSceneIndex = sceneNames.empty() ? -1 : 0;
+                }
+            }
+        }
+
+        if (window->GetEnableConfirmPopup())
+        {
+            const int sceneDeleteConfirm = test::RenderCenteredConfirmModal(
+                "##DeleteSceneConfirm",
+                "Confirm delete selected scene?",
+                state.deleteScenePopupRequested);
+            if (sceneDeleteConfirm == 1 && !state.pendingDeleteSceneName.empty())
+            {
+                DeleteSceneByName(state.pendingDeleteSceneName);
+                state.pendingDeleteSceneName.clear();
+                sceneNames = GetSceneNames();
+                state.selectedSceneIndex = sceneNames.empty() ? -1 : 0;
+            }
+            else if (sceneDeleteConfirm == -1)
+            {
+                state.pendingDeleteSceneName.clear();
+            }
+        }
     }
 
-    if (!window->running && selectedSceneIndex >= 0 && selectedSceneIndex < static_cast<int>(sceneNames.size()))
+    static void RenderPhysicsPanelAdapter(MyWindow* window, void* userData)
     {
-        if (ImGui::Button("Load Selected Scene"))
-        {
-            LoadScene(window, ResolveScenePathForLoad(sceneNames[selectedSceneIndex]));
-        }
+        if (!userData)
+            return;
+        RenderPhysicsPanel(window, *static_cast<PhysicsPanelState*>(userData));
     }
-	ImGui::End();
+};
+
+inline static void TestGui(const void* testObject, test::TestMenu* testMenu) {
+    ImGui_ImplGlfwGL3_NewFrame();
+	MyWindow* window = testMenu->window;
+
+    static PhysicsPanelState physicsPanelState;
+    TestGuiUtils::ClampWindowsToViewport();
+    TestGuiUtils::RenderViewScaleOverlay(window);
+    TestGuiUtils::UpdatePhysicsState(window, physicsPanelState);
 
     if (!window->running)
     {
         window->DrawColliderOutline();
     }
     window->DrawJointBindings();
+    window->DrawDescriptionLabels();
 
     if (window->HasSelectionChanged())
     {
@@ -773,7 +1006,7 @@ inline static void TestGui(const void* testObject, test::TestMenu* testMenu) {
         }
     }
 
-    ImGui::SetNextWindowPos(ImVec2(12.0f, 180.0f), ImGuiCond_FirstUseEver);
+    testMenu->SetRootWindowExtraRenderer(&TestGuiUtils::RenderPhysicsPanelAdapter, &physicsPanelState);
     testMenu->OnImGuiRender(window);
 
     ImGui::Render();
@@ -808,79 +1041,8 @@ int main(void)
         double deltaTime;
         while (window->Loop(deltaTime))
         {
-            /*rightBar->GetWorldPosition(pos);
-            pos.x += 50.0f * deltaTime;
-			if (pos.x > Width/2-100.0f) pos.x -= (float)Width/2; 
-            rightBar->SetWorldPosition(pos);*/
             DEBUG_RUN(TestGui(nullptr, testMenu));
             window->LoopEnd();
-            /*if (glfwGetKey(window, GLFW_KEY_RIGHT)) {
-                followPoint = false;
-                Vs[26].position[0] = Vs[26].position[0] + view_moveV;
-                Vs[27].position[0] = Vs[27].position[0] + view_moveV;
-                Vs[28].position[0] = Vs[28].position[0] + view_moveV;
-                Vs[29].position[0] = Vs[29].position[0] + view_moveV;
-                if (view_X < followSapce)
-                    view_X += view_moveV;
-                else
-                    x = x + view_moveV;
-            }
-            if (glfwGetKey(window, GLFW_KEY_LEFT)) {
-                followPoint = false;
-                Vs[26].position[0] = Vs[26].position[0] - view_moveV;
-                Vs[27].position[0] = Vs[27].position[0] - view_moveV;
-                Vs[28].position[0] = Vs[28].position[0] - view_moveV;
-                Vs[29].position[0] = Vs[29].position[0] - view_moveV;
-                if (view_X > -followSapce)
-                    view_X -= view_moveV;
-                else
-                    x = x - view_moveV;
-            }
-            if (glfwGetKey(window, GLFW_KEY_UP)) {
-                followPoint = false;
-                Vs[26].position[1] = Vs[26].position[1] - view_moveV;
-                Vs[27].position[1] = Vs[27].position[1] - view_moveV;
-                Vs[28].position[1] = Vs[28].position[1] - view_moveV;
-                Vs[29].position[1] = Vs[29].position[1] - view_moveV;
-                if (view_Y > -followSapce)
-                    view_Y -= view_moveV;
-                else
-                    y = y - view_moveV;
-            }
-            if (glfwGetKey(window, GLFW_KEY_DOWN)) {
-                followPoint = false;
-                Vs[26].position[1] = Vs[26].position[1] + view_moveV;
-                Vs[27].position[1] = Vs[27].position[1] + view_moveV;
-                Vs[28].position[1] = Vs[28].position[1] + view_moveV;
-                Vs[29].position[1] = Vs[29].position[1] + view_moveV;
-                if (view_Y < followSapce)
-                    view_Y += view_moveV;
-                else
-                    y = y + view_moveV;
-            }
-            if (followPoint)
-            {
-                if (abs(view_X) < 1.0f)
-                {
-                    x = x + view_X;
-                    view_X = 0.0f;
-                }
-                else
-                {
-                    x = x + view_X * followSpeed;
-                    view_X = view_X * (1 - followSpeed);
-                }
-                if (abs(view_Y) < 1.0f)
-                {
-                    y = y + view_Y;
-                    view_Y = 0.0f;
-                }
-                else
-                {
-                    y = y + view_Y * followSpeed;
-                    view_Y = view_Y * (1 - followSpeed);
-                }
-            }*/
         }
         delete testMenu;
         ImGui_ImplGlfwGL3_Shutdown();

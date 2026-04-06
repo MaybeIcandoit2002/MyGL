@@ -28,8 +28,80 @@ void Component::AddChild(Component* child)
 }
 void Component::RemoveChild(Component* child)
 {
-	children.erase(std::find(children.begin(), children.end(), child));
+	auto it = std::find(children.begin(), children.end(), child);
+	if (it == children.end()) return;
+	children.erase(it);
 	child->parent = nullptr;
+}
+
+Component* Component::GetDescriptionChild() const
+{
+	for (Component* child : children)
+	{
+		if (child && child->isDescriptionComponent)
+			return child;
+	}
+	return nullptr;
+}
+
+Component* Component::CreateOrGetDescriptionChild()
+{
+	if (isDescriptionComponent)
+		return nullptr;
+
+	Component* existing = GetDescriptionChild();
+	if (existing)
+		return existing;
+
+	Mesh* descMesh = Sources::Instance()->GetMesh("box");
+	if (!descMesh)
+		return nullptr;
+
+	Component* desc = new Component(descMesh);
+	desc->isDescriptionComponent = true;
+	desc->name = "Description";
+	desc->templateName.clear();
+	desc->descriptionText = "Description";
+	desc->descriptionOffset = glm::vec2(0.0f, 40.0f);
+	desc->descriptionShowParams = false;
+	desc->descriptionShowParamName = true;
+	desc->descriptionShowParamPosition = true;
+	desc->descriptionShowParamScale = false;
+	desc->descriptionShowParamRotation = false;
+	desc->descriptionShowParamPhysMass = false;
+	desc->descriptionShowParamPhysFriction = false;
+	desc->descriptionShowParamPhysRestitution = false;
+	desc->descriptionShowParamPhysVelocity = false;
+	desc->descriptionShowParamPhysAngularVelocity = false;
+	desc->descriptionFontSize = 16.0f;
+	desc->descriptionLineSpacing = 2.0f;
+	desc->shapeType = ShapeType::Box;
+	desc->SetTextureSlot(-1);
+	desc->SetBackgroundColor(0.15f, 0.18f, 0.24f, 0.85f);
+	desc->SetPosition(0.0f, 40.0f);
+	desc->SetScale(120.0f, 32.0f);
+	AddChild(desc);
+	return desc;
+}
+
+void Component::RemoveDescriptionChild()
+{
+	Component* desc = GetDescriptionChild();
+	if (!desc)
+		return;
+	RemoveChild(desc);
+	delete desc;
+}
+
+bool Component::CheckPointInVisualRect(float x, float y) const
+{
+	glm::vec2 worldPos, worldScale;
+	GetWorldPosition(worldPos);
+	GetWorldScale(worldScale);
+	const float halfW = std::fabs(worldScale.x) * 0.5f;
+	const float halfH = std::fabs(worldScale.y) * 0.5f;
+	return x >= worldPos.x - halfW && x <= worldPos.x + halfW &&
+		y >= worldPos.y - halfH && y <= worldPos.y + halfH;
 }
 void Component::GetPosition(glm::vec2& position) const
 {
@@ -81,9 +153,10 @@ void Component::GetScale(glm::vec2& scale) const
 {
 	scale = transform.scale;
 	if (parent == nullptr) return;
-	if (parent->transform.scale.x == 0)
-	scale.x /= parent->transform.scale.x;
-	scale.y /= parent->transform.scale.y;
+	if (parent->transform.scale.x != 0.0f)
+		scale.x /= parent->transform.scale.x;
+	if (parent->transform.scale.y != 0.0f)
+		scale.y /= parent->transform.scale.y;
 }
 void Component::SetScale(glm::vec2 scale)
 {
@@ -212,6 +285,30 @@ void Component::GetPhysicRelativeScale(glm::vec2& scale) const
 
 void Component::BeforeUpdate(Renderer* renderer, bool physicRunning)
 {
+	if (isDescriptionComponent)
+	{
+		if (!enabled)
+		{
+			mesh->uniform[meshIndex].positionTransform = {
+				0.0f, 0.0f, 0.0f, 0.0f,
+				0.0f, 0.0f, 0.0f, 0.0f,
+				transform.position.x, transform.position.y, 1.0f, 0.0f
+			};
+			mesh->uniform[meshIndex].color = glm::vec4(backgroundColor.r, backgroundColor.g, backgroundColor.b, 0.0f);
+			mesh->uniform[meshIndex].texIndex = glm::vec4((float)textureSlot, 0.0f, 0.0f, 0.0f);
+			for (Component* child : children)
+				child->BeforeUpdate(renderer, physicRunning);
+			return;
+		}
+
+		if (parent)
+		{
+			glm::vec2 parentWorldPos;
+			parent->GetWorldPosition(parentWorldPos);
+			transform.position = parentWorldPos + descriptionOffset;
+		}
+	}
+
 	if (shape)
 	{
 		if (physicRunning && hasPhysicBody)

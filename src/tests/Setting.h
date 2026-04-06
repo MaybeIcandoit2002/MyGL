@@ -46,6 +46,57 @@ namespace test {
                 window->SetAutoHideEditProperties(autoHideEditProperties);
             }
 
+            bool enableConfirmPopup = window->GetEnableConfirmPopup();
+            if (ImGui::Checkbox("Enable Confirm Popup", &enableConfirmPopup))
+            {
+                window->SetEnableConfirmPopup(enableConfirmPopup);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Advanced Physics (Less Common)");
+            PhysicWorld* physicWorld = window->GetPhysicWorld();
+            if (physicWorld)
+            {
+                glm::vec4 jointLineColor = window->GetJointLineColor();
+                float jointLineColorValue[4] = { jointLineColor.r, jointLineColor.g, jointLineColor.b, jointLineColor.a };
+                if (ImGui::ColorEdit4("Joint Line Color", jointLineColorValue))
+                {
+                    window->SetJointLineColor(glm::vec4(jointLineColorValue[0], jointLineColorValue[1], jointLineColorValue[2], jointLineColorValue[3]));
+                }
+
+                float jointLineThickness = window->GetJointLineThickness();
+                if (ImGui::DragFloat("Joint Line Thickness", &jointLineThickness, 0.1f, 0.5f, 10.0f, "%.2f"))
+                {
+                    window->SetJointLineThickness(jointLineThickness);
+                }
+
+                float staticFriction = static_cast<float>(physicWorld->GetStaticFrictionCoeff());
+                if (ImGui::DragFloat("Static Friction Coeff", &staticFriction, 0.01f, 0.0f, 5.0f))
+                {
+                    physicWorld->SetStaticFrictionCoeff(staticFriction);
+                }
+
+                float kineticFriction = static_cast<float>(physicWorld->GetKineticFrictionCoeff());
+                if (ImGui::DragFloat("Kinetic Friction Coeff", &kineticFriction, 0.01f, 0.0f, 5.0f))
+                {
+                    physicWorld->SetKineticFrictionCoeff(kineticFriction);
+                }
+
+                float slipThreshold = static_cast<float>(physicWorld->GetSlipSpeedThreshold());
+                if (ImGui::DragFloat("Slip Speed Threshold", &slipThreshold, 0.01f, 0.0f, 20.0f))
+                {
+                    physicWorld->SetSlipSpeedThreshold(slipThreshold);
+                }
+
+                if (ImGui::Button("Reset Advanced Physics Params"))
+                {
+                    physicWorld->SetStaticFrictionCoeff(1.2f);
+                    physicWorld->SetKineticFrictionCoeff(0.8f);
+                    physicWorld->SetSlipSpeedThreshold(0.5f);
+                    window->SetJointLineThickness(2.0f);
+                }
+            }
+
             return nullptr;
         }
     };

@@ -9,6 +9,7 @@ namespace test
 	class TestMenu : public Test
 	{
 	private:
+		using RootWindowExtraRenderer = void(*)(MyWindow* window, void* userData);
 		struct TestFactoryEntry
 		{
 			std::string name;
@@ -26,12 +27,20 @@ namespace test
 		std::vector<TestFactoryEntry> tests;
 		std::vector<OpenWindowEntry> openWindows;
 		std::uint64_t nextImGuiWindowId;
+		std::int64_t activeWindowIndex;
+		float leftMenuWidth;
+		float rightMenuWidth;
+		RootWindowExtraRenderer rootWindowExtraRenderer;
+		void* rootWindowExtraRendererData;
+		void CloseAllSubWindows();
+		OpenWindowEntry* GetActiveWindow();
 	public:
 		MyWindow* window;
 		TestMenu(MyWindow* window);
 		~TestMenu() override;
 
 		Test* OnImGuiRender(MyWindow* window) override;
+		void SetRootWindowExtraRenderer(RootWindowExtraRenderer renderer, void* userData);
 		void OpenWindow(const std::string& name);
 		void CloseWindow(const std::string& name);
 		template<typename T>

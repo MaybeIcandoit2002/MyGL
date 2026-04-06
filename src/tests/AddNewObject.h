@@ -12,6 +12,10 @@ namespace test {
         {
             ImGui::Text("Add New Object");
             Renderer* renderer = window ? window->GetRenderer() : nullptr;
+            bool shouldReturn = false;
+
+            ImGui::Separator();
+            ImGui::BeginChild("##AddObjectGrid", ImVec2(0.0f, 0.0f), false);
 
             const float buttonSize = 56.0f;
             const ImVec2 buttonSizeVec(buttonSize, buttonSize);
@@ -20,9 +24,10 @@ namespace test {
             const int columns = (buttonSize + spacing > 0.0f)
                 ? static_cast<int>((availWidth + spacing) / (buttonSize + spacing))
                 : 1;
-            const int rowCount = columns > 0 ? columns : 1;
+            const int itemsPerRow = columns > 0 ? columns : 1;
 
             int templateIndex = 0;
+            int displayedCount = 0;
             const auto& templates = Sources::Instance()->GetComponentTemplate();
             for (size_t i = 0; i < templates.size(); ++i)
             {
@@ -53,7 +58,8 @@ namespace test {
 
                 ImGui::PopID();
 
-                if ((static_cast<int>(i) + 1) % rowCount != 0)
+                ++displayedCount;
+                if (displayedCount % itemsPerRow != 0)
                     ImGui::SameLine();
 
                 if (clicked)
@@ -71,23 +77,53 @@ namespace test {
                         child->SetPosition(0, 0);
                         child->SetScale(CT.scale1, CT.scale2);
                         child->SetBackgroundColor(CT.backgroundColor[0], CT.backgroundColor[1], CT.backgroundColor[2], CT.backgroundColor[3]);
+                        bool physicsInited = false;
                         switch (CT.shapeType)
                         {
                         case ShapeType::Circle:
                             child->InitPhysicProperty(CT.physicSize1, CT.physicMass, CT.physicRestitution, CT.physicFriction);
+                            physicsInited = true;
                             break;
                         case ShapeType::Box:
-                            child->InitPhysicProperty(CT.physicSize1, CT.physicSize2[0], CT.physicMass, CT.physicRestitution, CT.physicFriction);
+                            if (CT.physicSize2)
+                            {
+                                child->InitPhysicProperty(CT.physicSize1, CT.physicSize2[0], CT.physicMass, CT.physicRestitution, CT.physicFriction);
+                                physicsInited = true;
+                            }
                             break;
                         case ShapeType::Polygon:
-                            child->InitPhysicProperty(static_cast<int>(CT.physicSize1), CT.physicSize2, CT.physicMass, CT.physicRestitution, CT.physicFriction);
+                            if (CT.physicSize2)
+                            {
+                                child->InitPhysicProperty(static_cast<int>(CT.physicSize1), CT.physicSize2, CT.physicMass, CT.physicRestitution, CT.physicFriction);
+                                physicsInited = true;
+                            }
+                            break;
+                        default:
                             break;
                         }
+
+                        if (!physicsInited || !child->HasPhysicsShape())
+                        {
+                            window->GetRootComponent()->RemoveChild(child);
+                            delete child;
+                            shouldReturn = true;
+                            break;
+                        }
+
                         child->SetSensor(true);
-                        return nullptr;
+                        shouldReturn = true;
+                        break;
                     }
                 }
+
+                if (shouldReturn)
+                    break;
             }
+
+            ImGui::EndChild();
+
+            if (shouldReturn)
+                return nullptr;
 
             return nullptr;
         }

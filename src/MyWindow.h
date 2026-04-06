@@ -28,8 +28,11 @@ private:
 	bool changeSelectedComponent;
 	Component* bindingAnchorComponent;
 	bool autoHideEditProperties;
+	bool enableConfirmPopup;
 	bool draggingSelectedComponent;
 	glm::vec2 draggingOffset;
+	bool draggingView;
+	glm::vec2 lastCursorPos;
 	void RefreshProjection();
 public:
 	bool running;
@@ -41,6 +44,8 @@ public:
 	inline glm::vec4 GetClearColor() const { return clearColor; }
 	inline bool GetAutoHideEditProperties() const { return autoHideEditProperties; }
 	inline void SetAutoHideEditProperties(bool enable) { autoHideEditProperties = enable; }
+	inline bool GetEnableConfirmPopup() const { return enableConfirmPopup; }
+	inline void SetEnableConfirmPopup(bool enable) { enableConfirmPopup = enable; }
 
 	inline GLFWwindow* GetWindow() { return window; }
 	inline PhysicWorld* GetPhysicWorld() { return physicWorld; }
@@ -81,4 +86,5 @@ public:
 	void Update();
 	void DrawColliderOutline();
 	void DrawJointBindings();
+	void DrawDescriptionLabels();
 };

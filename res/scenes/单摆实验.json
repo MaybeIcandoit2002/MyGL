@@ -7,9 +7,10 @@
       0.0,
       0.0
     ],
+    "enableConfirmPopup": true,
     "gravity": [
       0.0,
-      -9.800000190734863
+      -98.0
     ],
     "jointLineColor": [
       1.0,
@@ -29,8 +30,8 @@
     "slipSpeedThreshold": 0.5,
     "staticFrictionCoeff": 1.2000000476837158,
     "viewCenter": [
-      -26.607295989990234,
-      12.362836837768555
+      196.46961975097656,
+      70.05514526367188
     ],
     "viewScale": 1.3000000715255737,
     "windowScale": 1.399999976158142
@@ -49,7 +50,7 @@
       "bId": 7,
       "damping": 0.0,
       "distance": 300.0,
-      "id": 1,
+      "id": 7,
       "stiffness": 0.0,
       "type": 0
     },
@@ -66,7 +67,7 @@
       "bId": 8,
       "damping": 0.0,
       "distance": 401.5384216308594,
-      "id": 2,
+      "id": 8,
       "stiffness": 0.0,
       "type": 0
     },
@@ -83,7 +84,7 @@
       "bId": 9,
       "damping": 0.0,
       "distance": 300.0,
-      "id": 3,
+      "id": 9,
       "stiffness": 0.0,
       "type": 0
     }
@@ -102,6 +103,7 @@
       "friction": 0.20000000298023224,
       "hasPhysicBody": true,
       "id": 4,
+      "isDescriptionComponent": false,
       "name": "box",
       "parentId": 0,
       "physicMass": 1.0,
@@ -146,6 +148,7 @@
       "friction": 0.20000000298023224,
       "hasPhysicBody": true,
       "id": 7,
+      "isDescriptionComponent": false,
       "name": "circle",
       "parentId": 0,
       "physicMass": 1.0,
@@ -178,6 +181,62 @@
       ]
     },
     {
+      "color": [
+        0.15000000596046448,
+        0.18000000715255737,
+        0.23999999463558197,
+        0.8500000238418579
+      ],
+      "descriptionFontSize": 16.0,
+      "descriptionLineSpacing": 2.0,
+      "descriptionOffset": [
+        -1.538482666015625,
+        39.23075866699219
+      ],
+      "descriptionShowParamName": false,
+      "descriptionShowParamPhysAngularVelocity": false,
+      "descriptionShowParamPhysFriction": false,
+      "descriptionShowParamPhysMass": true,
+      "descriptionShowParamPhysRestitution": false,
+      "descriptionShowParamPhysVelocity": false,
+      "descriptionShowParamPosition": false,
+      "descriptionShowParamRotation": false,
+      "descriptionShowParamScale": false,
+      "descriptionShowParams": false,
+      "descriptionText": "球",
+      "enabled": true,
+      "friction": 0.0,
+      "hasPhysicBody": false,
+      "id": 11,
+      "isDescriptionComponent": true,
+      "name": "Description",
+      "parentId": 7,
+      "physicMass": 0.0,
+      "physicSize1": 0.0,
+      "physicSize2": 0.0,
+      "position": [
+        -1.538482666015625,
+        39.23075866699219
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.0,
+      "rotation": 0.0,
+      "scale": [
+        2.4000000953674316,
+        0.7692307233810425
+      ],
+      "shapeType": 1,
+      "templateName": "Description",
+      "textureSlot": -1
+    },
+    {
       "angularVelocity": 0.0,
       "bodyType": 0,
       "color": [
@@ -190,6 +249,7 @@
       "friction": 0.20000000298023224,
       "hasPhysicBody": true,
       "id": 8,
+      "isDescriptionComponent": false,
       "name": "circle",
       "parentId": 0,
       "physicMass": 1.0,
@@ -222,6 +282,62 @@
       ]
     },
     {
+      "color": [
+        0.15000000596046448,
+        0.18000000715255737,
+        0.23999999463558197,
+        0.8500000238418579
+      ],
+      "descriptionFontSize": 16.0,
+      "descriptionLineSpacing": 2.0,
+      "descriptionOffset": [
+        -3.076873779296875,
+        39.230743408203125
+      ],
+      "descriptionShowParamName": false,
+      "descriptionShowParamPhysAngularVelocity": false,
+      "descriptionShowParamPhysFriction": false,
+      "descriptionShowParamPhysMass": true,
+      "descriptionShowParamPhysRestitution": false,
+      "descriptionShowParamPhysVelocity": false,
+      "descriptionShowParamPosition": false,
+      "descriptionShowParamRotation": false,
+      "descriptionShowParamScale": false,
+      "descriptionShowParams": false,
+      "descriptionText": "Description",
+      "enabled": true,
+      "friction": 0.0,
+      "hasPhysicBody": false,
+      "id": 12,
+      "isDescriptionComponent": true,
+      "name": "Description",
+      "parentId": 8,
+      "physicMass": 0.0,
+      "physicSize1": 0.0,
+      "physicSize2": 0.0,
+      "position": [
+        -3.076873779296875,
+        39.230743408203125
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.0,
+      "rotation": 0.0,
+      "scale": [
+        2.4000000953674316,
+        0.7692307233810425
+      ],
+      "shapeType": 1,
+      "templateName": "Description",
+      "textureSlot": -1
+    },
+    {
       "angularVelocity": 0.0,
       "bodyType": 0,
       "color": [
@@ -234,6 +350,7 @@
       "friction": 0.20000000298023224,
       "hasPhysicBody": true,
       "id": 9,
+      "isDescriptionComponent": false,
       "name": "circle",
       "parentId": 0,
       "physicMass": 50.0,
@@ -264,6 +381,62 @@
         0.0,
         0.0
       ]
+    },
+    {
+      "color": [
+        0.15000000596046448,
+        0.18000000715255737,
+        0.23999999463558197,
+        0.8500000238418579
+      ],
+      "descriptionFontSize": 16.0,
+      "descriptionLineSpacing": 2.0,
+      "descriptionOffset": [
+        2.307708740234375,
+        36.153839111328125
+      ],
+      "descriptionShowParamName": false,
+      "descriptionShowParamPhysAngularVelocity": false,
+      "descriptionShowParamPhysFriction": false,
+      "descriptionShowParamPhysMass": true,
+      "descriptionShowParamPhysRestitution": false,
+      "descriptionShowParamPhysVelocity": false,
+      "descriptionShowParamPosition": false,
+      "descriptionShowParamRotation": false,
+      "descriptionShowParamScale": false,
+      "descriptionShowParams": false,
+      "descriptionText": "球",
+      "enabled": true,
+      "friction": 0.0,
+      "hasPhysicBody": false,
+      "id": 10,
+      "isDescriptionComponent": true,
+      "name": "Description",
+      "parentId": 9,
+      "physicMass": 0.0,
+      "physicSize1": 0.0,
+      "physicSize2": 0.0,
+      "position": [
+        2.307708740234375,
+        36.153839111328125
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.0,
+      "rotation": 0.0,
+      "scale": [
+        2.4000000953674316,
+        0.7692307233810425
+      ],
+      "shapeType": 1,
+      "templateName": "Description",
+      "textureSlot": -1
     }
   ]
 }

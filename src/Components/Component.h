@@ -38,6 +38,21 @@ public:
 	bool hasPhysicBody;					// 是否有物理刚体
 
 	bool enabled = true;				// 用于触摸系统过滤
+	bool isDescriptionComponent = false;
+	std::string descriptionText;
+	glm::vec2 descriptionOffset = glm::vec2(0.0f, 40.0f);
+	bool descriptionShowParams = false;
+	bool descriptionShowParamName = true;
+	bool descriptionShowParamPosition = true;
+	bool descriptionShowParamScale = false;
+	bool descriptionShowParamRotation = false;
+	bool descriptionShowParamPhysMass = false;
+	bool descriptionShowParamPhysFriction = false;
+	bool descriptionShowParamPhysRestitution = false;
+	bool descriptionShowParamPhysVelocity = false;
+	bool descriptionShowParamPhysAngularVelocity = false;
+	float descriptionFontSize = 16.0f;
+	float descriptionLineSpacing = 2.0f;
 
 	Component(Mesh* mesh) :
 		hasPhysicBody(false), mesh(mesh), stableId(nextStableId++),
@@ -101,6 +116,11 @@ public:
 
 	void AddChild(Component* child);
 	void RemoveChild(Component* child);
+	Component* GetDescriptionChild() const;
+	Component* CreateOrGetDescriptionChild();
+	void RemoveDescriptionChild();
+	inline Component* GetParent() const { return parent; }
+	bool CheckPointInVisualRect(float x, float y) const;
 	void SetPosition(glm::vec2 position);
 	void SetPosition(float x, float y);
 	void SetWorldPosition(glm::vec2 position);
@@ -160,9 +180,15 @@ public:
 	/// <param name="friction">摩擦系数（0-1，越大摩擦越大）</param>
 	void InitPhysicProperty(int count, float* vertecies, float mass, float restitution, float friction);
 
-	inline void SwitchToStatic() { cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_STATIC); }
+	inline bool HasPhysicsShape() const { return shape != nullptr; }
+	inline void SwitchToStatic()
+	{
+		if (!shape) return;
+		cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_STATIC);
+	}
 	inline void SwitchToDynamic()
 	{
+		if (!shape) return;
 		cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_DYNAMIC);
 		float moment = 0;
 		switch (shapeType)
@@ -182,12 +208,17 @@ public:
 	}
 	//inline void SwitchToKinematic() { cpBodySetType(cpShapeGetBody(shape), CP_BODY_TYPE_KINEMATIC); }
 
-	inline void SetSensor(bool sensor) { hasPhysicBody = !sensor; cpShapeSetSensor(shape, cpBool(sensor)); }
-	inline void SetVelocity(glm::vec2 velocity) { cpBodySetVelocity(cpShapeGetBody(shape), cpv(velocity.x, velocity.y)); }
-	inline void SetAngleVelocity(float angularVelocity) { cpBodySetAngularVelocity(cpShapeGetBody(shape), glm::radians(angularVelocity)); }
-	inline void SetMass(float mass) { physicMass = mass; cpShapeSetMass(shape, mass); }
-	inline void SetRestitution(float restitution) { cpShapeSetElasticity(shape, restitution); }
-	inline void SetFriction(float friction) { cpShapeSetFriction(shape, friction); }
+	inline void SetSensor(bool sensor)
+	{
+		hasPhysicBody = !sensor && shape != nullptr;
+		if (!shape) return;
+		cpShapeSetSensor(shape, cpBool(sensor));
+	}
+	inline void SetVelocity(glm::vec2 velocity) { if (!shape) return; cpBodySetVelocity(cpShapeGetBody(shape), cpv(velocity.x, velocity.y)); }
+	inline void SetAngleVelocity(float angularVelocity) { if (!shape) return; cpBodySetAngularVelocity(cpShapeGetBody(shape), glm::radians(angularVelocity)); }
+	inline void SetMass(float mass) { physicMass = mass; if (!shape) return; cpShapeSetMass(shape, mass); }
+	inline void SetRestitution(float restitution) { if (!shape) return; cpShapeSetElasticity(shape, restitution); }
+	inline void SetFriction(float friction) { if (!shape) return; cpShapeSetFriction(shape, friction); }
 
 	inline void syncPosition() { transform.position = utils::ParseVec(cpBodyGetPosition(cpShapeGetBody(shape))); }
 
@@ -200,14 +231,14 @@ public:
 	}
 	inline static std::uint64_t PeekNextStableId() { return nextStableId; }
 
-	inline cpBody* GetBody() const { return cpShapeGetBody(shape); }
+	inline cpBody* GetBody() const { return shape ? cpShapeGetBody(shape) : nullptr; }
 	inline float GetMass() const { return physicMass; }
-	inline float GetMoment() const { return static_cast<float>(cpShapeGetMoment(shape)); }
-	inline float GetRestitution() const { return static_cast<float>(cpShapeGetElasticity(shape)); }
-	inline float GetFriction() const { return static_cast<float>(cpShapeGetFriction(shape)); }
-	inline glm::vec2 GetVelocity() const { return utils::ParseVec(cpBodyGetVelocity(cpShapeGetBody(shape)));}
-	inline glm::vec2 GetForce() const { return utils::ParseVec(cpBodyGetForce(cpShapeGetBody(shape))); }
-	inline float GetTorque() const { return static_cast<float>(cpBodyGetTorque(cpShapeGetBody(shape))); }
+	inline float GetMoment() const { return shape ? static_cast<float>(cpShapeGetMoment(shape)) : 0.0f; }
+	inline float GetRestitution() const { return shape ? static_cast<float>(cpShapeGetElasticity(shape)) : 0.0f; }
+	inline float GetFriction() const { return shape ? static_cast<float>(cpShapeGetFriction(shape)) : 0.0f; }
+	inline glm::vec2 GetVelocity() const { return shape ? utils::ParseVec(cpBodyGetVelocity(cpShapeGetBody(shape))) : glm::vec2(0.0f, 0.0f); }
+	inline glm::vec2 GetForce() const { return shape ? utils::ParseVec(cpBodyGetForce(cpShapeGetBody(shape))) : glm::vec2(0.0f, 0.0f); }
+	inline float GetTorque() const { return shape ? static_cast<float>(cpBodyGetTorque(cpShapeGetBody(shape))) : 0.0f; }
 	inline glm::vec2 GetAcceleration() const { return GetForce() / GetMass(); }
 	inline float GetAngularAcceleration() const
 	{
@@ -216,9 +247,9 @@ public:
 		return glm::degrees(GetTorque() / moment);
 	}
 	inline glm::vec2 GetMomentum() const { return GetVelocity() * GetMass(); }
-	inline float GetAngle() const { return glm::degrees(static_cast<float>(cpBodyGetAngle(cpShapeGetBody(shape)))); }
-	inline float GetAngleVelocity() const { return glm::degrees(static_cast<float>(cpBodyGetAngularVelocity(cpShapeGetBody(shape)))); }
-	inline float GetKineticEnergy() const { return static_cast<float>(cpBodyKineticEnergy(cpShapeGetBody(shape))); }
+	inline float GetAngle() const { return shape ? glm::degrees(static_cast<float>(cpBodyGetAngle(cpShapeGetBody(shape)))) : 0.0f; }
+	inline float GetAngleVelocity() const { return shape ? glm::degrees(static_cast<float>(cpBodyGetAngularVelocity(cpShapeGetBody(shape)))) : 0.0f; }
+	inline float GetKineticEnergy() const { return shape ? static_cast<float>(cpBodyKineticEnergy(cpShapeGetBody(shape))) : 0.0f; }
 
 	void DrawColliderOutline(
 		void* drawList,
@@ -237,7 +268,7 @@ public:
 		float viewCenterY,
 		uint32_t color) const;
 
-	bool checkPointInShape(float x, float y) const { return cpShapePointQuery(shape, cpv(x, y), nullptr) <= 0; }
+	bool checkPointInShape(float x, float y) const { return shape ? (cpShapePointQuery(shape, cpv(x, y), nullptr) <= 0) : false; }
 
 private:
 	void SyncPhysicsShapeBySize();

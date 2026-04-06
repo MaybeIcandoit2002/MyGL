@@ -1,5 +1,6 @@
 #pragma once
 #include "Test.h"
+#include "ConfirmPopup.h"
 #include <cstdio>
 
 namespace test {
@@ -10,8 +11,11 @@ namespace test {
         int _ColliderShape;
         Component* _NameTarget;
         char _NameBuffer[128];
+        Component* _DescriptionTarget;
+        char _DescriptionBuffer[1024];
+        bool _DeleteComponentPopupRequested;
     public:
-        EditProperties(): _ColliderType(0), _ColliderShape(0), _NameTarget(nullptr), _NameBuffer{} {}
+        EditProperties(): _ColliderType(0), _ColliderShape(0), _NameTarget(nullptr), _NameBuffer{}, _DescriptionTarget(nullptr), _DescriptionBuffer{}, _DeleteComponentPopupRequested(false) {}
         void OnUpdate(const void* p, float deltaTime) override {}
         void OnRender() override {}
         Test* OnImGuiRender(MyWindow* window) override
@@ -24,6 +28,14 @@ namespace test {
                 return nullptr;
             }
 
+            Component* description = target->isDescriptionComponent ? nullptr : target->GetDescriptionChild();
+            auto EnsureDescription = [&]() -> Component*
+            {
+                if (!description && !target->isDescriptionComponent)
+                    description = target->CreateOrGetDescriptionChild();
+                return description;
+            };
+
             if (_NameTarget != target)
             {
                 _NameTarget = target;
@@ -32,6 +44,16 @@ namespace test {
             if (ImGui::InputText("Name", _NameBuffer, IM_ARRAYSIZE(_NameBuffer)))
             {
                 target->name = _NameBuffer;
+            }
+            if (!target->isDescriptionComponent)
+            {
+                bool showNameInDesc = description ? description->descriptionShowParamName : false;
+                ImGui::SameLine();
+                if (ImGui::Checkbox("##DescShowName", &showNameInDesc))
+                {
+                    Component* d = EnsureDescription();
+                    if (d) d->descriptionShowParamName = showNameInDesc;
+                }
             }
             ImGui::Text("Node ID: %llu", static_cast<unsigned long long>(target->GetStableId()));
 
@@ -46,13 +68,43 @@ namespace test {
             {
                 if (!window->running) target->SetPosition(pos);
             }
+            if (!target->isDescriptionComponent)
+            {
+                bool showPosInDesc = description ? description->descriptionShowParamPosition : false;
+                ImGui::SameLine();
+                if (ImGui::Checkbox("##DescShowPosition", &showPosInDesc))
+                {
+                    Component* d = EnsureDescription();
+                    if (d) d->descriptionShowParamPosition = showPosInDesc;
+                }
+            }
             if (ImGui::DragFloat2("Scale", &scale.x, 0.1f, 0.0f, 1000.0f))
             {
                 if (!window->running) target->SetScale(scale);
             }
+            if (!target->isDescriptionComponent)
+            {
+                bool showScaleInDesc = description ? description->descriptionShowParamScale : false;
+                ImGui::SameLine();
+                if (ImGui::Checkbox("##DescShowScale", &showScaleInDesc))
+                {
+                    Component* d = EnsureDescription();
+                    if (d) d->descriptionShowParamScale = showScaleInDesc;
+                }
+            }
             if (ImGui::DragFloat("Rotation", &rot, 1.0f, -360.0f, 360.0f))
             {
                 if (!window->running) target->SetRotation(rot);
+            }
+            if (!target->isDescriptionComponent)
+            {
+                bool showRotInDesc = description ? description->descriptionShowParamRotation : false;
+                ImGui::SameLine();
+                if (ImGui::Checkbox("##DescShowRotation", &showRotInDesc))
+                {
+                    Component* d = EnsureDescription();
+                    if (d) d->descriptionShowParamRotation = showRotInDesc;
+                }
             }
 
             // Background color
@@ -60,6 +112,71 @@ namespace test {
             target->GetBackgroundColor(color);
             if (ImGui::ColorEdit4("Background Color", &color.x)) {
                 target->SetBackgroundColor(color);
+            }
+
+            ImGui::Separator();
+            ImGui::Text("Description");
+            if (target->isDescriptionComponent)
+            {
+                ImGui::TextDisabled("Description node cannot own another description.");
+            }
+            else
+            {
+                bool renderDescription = description ? description->enabled : false;
+                if (ImGui::Checkbox("Render Description", &renderDescription))
+                {
+                    if (renderDescription)
+                    {
+                        if (!description)
+                            description = target->CreateOrGetDescriptionChild();
+                        if (description)
+                            description->enabled = true;
+                    }
+                    else if (description)
+                    {
+                        description->enabled = false;
+                    }
+                }
+
+                if (description)
+                {
+                    if (_DescriptionTarget != description)
+                    {
+                        _DescriptionTarget = description;
+                        std::snprintf(_DescriptionBuffer, sizeof(_DescriptionBuffer), "%s", description->descriptionText.c_str());
+                    }
+
+                    if (ImGui::InputTextMultiline("Text", _DescriptionBuffer, IM_ARRAYSIZE(_DescriptionBuffer), ImVec2(-1.0f, 110.0f)))
+                    {
+                        description->descriptionText = _DescriptionBuffer;
+                    }
+
+                    ImGui::DragFloat("Font Size", &description->descriptionFontSize, 0.2f, 10.0f, 48.0f, "%.1f");
+                    ImGui::DragFloat("Line Spacing", &description->descriptionLineSpacing, 0.1f, 0.0f, 30.0f, "%.1f");
+
+                    glm::vec2 descPos;
+                    glm::vec4 descColor;
+                    glm::vec2 ownerPos;
+                    glm::vec2 descWorldPos;
+                    target->GetWorldPosition(ownerPos);
+                    description->GetWorldPosition(descWorldPos);
+                    descPos = description->descriptionOffset;
+                    description->GetBackgroundColor(descColor);
+
+                    if (ImGui::DragFloat2("Desc Offset", &descPos.x, 1.0f))
+                    {
+                        description->descriptionOffset = descPos;
+                        description->SetWorldPosition(ownerPos + descPos);
+                    }
+                    if (ImGui::ColorEdit4("Desc Background", &descColor.x))
+                        description->SetBackgroundColor(descColor);
+                    description->SetTextureSlot(-1);
+                    description->SetSensor(true);
+                }
+                else
+                {
+                    _DescriptionTarget = nullptr;
+                }
             }
 
             ImGui::Separator();
@@ -194,9 +311,35 @@ namespace test {
             {
                 if (!window->running)
                 {
-                    Component* root = window->GetRootComponent();
+                    if (window->GetEnableConfirmPopup())
+                    {
+                        _DeleteComponentPopupRequested = true;
+                    }
+                    else
+                    {
+                        Component* parent = target->GetParent();
+                        window->ClearBindingAnchorIf(target);
+                        if (parent) parent->RemoveChild(target);
+                        delete target;
+                        window->ClearSelection();
+                        return nullptr;
+                    }
+                }
+            }
+
+            if (window->GetEnableConfirmPopup())
+            {
+                char popupId[96] = {};
+                std::snprintf(popupId, sizeof(popupId), "##DeleteComponentConfirm_%llu", static_cast<unsigned long long>(target->GetStableId()));
+                const int confirmResult = RenderCenteredConfirmModal(
+                    popupId,
+                    "Confirm delete selected component?",
+                    _DeleteComponentPopupRequested);
+                if (confirmResult == 1)
+                {
+                    Component* parent = target->GetParent();
                     window->ClearBindingAnchorIf(target);
-                    root->RemoveChild(target);
+                    if (parent) parent->RemoveChild(target);
                     delete target;
                     window->ClearSelection();
                     return nullptr;
@@ -280,22 +423,72 @@ namespace test {
                 {
                     target->SetVelocity(vel);
                 }
+                if (!target->isDescriptionComponent)
+                {
+                    bool showInDesc = description ? description->descriptionShowParamPhysVelocity : false;
+                    ImGui::SameLine();
+                    if (ImGui::Checkbox("##DescShowPhysVelocity", &showInDesc))
+                    {
+                        Component* d = EnsureDescription();
+                        if (d) d->descriptionShowParamPhysVelocity = showInDesc;
+                    }
+                }
                 if (ImGui::DragFloat("Angular Velocity", &angularVel, 0.1f))
                 {
                     target->SetAngleVelocity(angularVel);
 				}
+                if (!target->isDescriptionComponent)
+                {
+                    bool showInDesc = description ? description->descriptionShowParamPhysAngularVelocity : false;
+                    ImGui::SameLine();
+                    if (ImGui::Checkbox("##DescShowPhysAngularVelocity", &showInDesc))
+                    {
+                        Component* d = EnsureDescription();
+                        if (d) d->descriptionShowParamPhysAngularVelocity = showInDesc;
+                    }
+                }
                 if (ImGui::DragFloat("Mass", &mass, 0.1f, 0.0f, 1000.0f))
                 {
                     target->SetMass(mass);
 				}
+                if (!target->isDescriptionComponent)
+                {
+                    bool showInDesc = description ? description->descriptionShowParamPhysMass : false;
+                    ImGui::SameLine();
+                    if (ImGui::Checkbox("##DescShowPhysMass", &showInDesc))
+                    {
+                        Component* d = EnsureDescription();
+                        if (d) d->descriptionShowParamPhysMass = showInDesc;
+                    }
+                }
                 if (ImGui::DragFloat("Friction", &friction, 0.01f, 0.0f, 1.0f))
                 {
 					target->SetFriction(friction);
+                }
+                if (!target->isDescriptionComponent)
+                {
+                    bool showInDesc = description ? description->descriptionShowParamPhysFriction : false;
+                    ImGui::SameLine();
+                    if (ImGui::Checkbox("##DescShowPhysFriction", &showInDesc))
+                    {
+                        Component* d = EnsureDescription();
+                        if (d) d->descriptionShowParamPhysFriction = showInDesc;
+                    }
                 }
                 if (ImGui::DragFloat("Restitution", &restitution, 0.01f, 0.0f, 1.0f))
                 {
                     target->SetRestitution(restitution);
 				}
+                if (!target->isDescriptionComponent)
+                {
+                    bool showInDesc = description ? description->descriptionShowParamPhysRestitution : false;
+                    ImGui::SameLine();
+                    if (ImGui::Checkbox("##DescShowPhysRestitution", &showInDesc))
+                    {
+                        Component* d = EnsureDescription();
+                        if (d) d->descriptionShowParamPhysRestitution = showInDesc;
+                    }
+                }
             }
 			return nullptr;
         }
