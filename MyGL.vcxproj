@@ -155,7 +155,9 @@
   <ItemGroup>
     <None Include="README.md" />
     <None Include="res\Components\default.json" />
+    <None Include="res\i18n\ui_texts.json" />
     <None Include="res\meshs\default.json" />
+    <None Include="res\scenes\runtime_scene.json" />
     <None Include="res\shaders\Vertex.shader" />
     <None Include="res\shaders\Fragment.shader" />
   </ItemGroup>
@@ -164,6 +166,7 @@
     <ClInclude Include="src\Components\Component.h" />
     <ClInclude Include="src\Components\TouchDispatcher.h" />
     <ClInclude Include="src\Components\Utils.h" />
+    <ClInclude Include="src\Localization.h" />
     <ClInclude Include="src\RandomDevice.h" />
     <ClInclude Include="src\collisionSystem\PhysicWorld.h" />
     <ClInclude Include="src\Macros.h" />
@@ -171,6 +174,10 @@
     <ClCompile Include="src\renderComponents\Shader.cpp" />
     <ClInclude Include="src\renderComponents\IndexBuffer.h" />
     <ClInclude Include="src\renderComponents\Renderer.h" />
+    <ClInclude Include="src\tests\ConfirmPopup.h" />
+    <ClInclude Include="src\tests\GlobalPhysicParams.h" />
+    <ClInclude Include="src\tests\SearchRoot.h" />
+    <ClInclude Include="src\tests\Setting.h" />
     <ClInclude Include="src\tests\Test.h" />
     <ClInclude Include="src\vendor\imgui\imconfig.h" />
     <ClInclude Include="src\vendor\imgui\imgui.h" />

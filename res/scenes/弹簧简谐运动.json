@@ -1,0 +1,206 @@
+{
+  "global": {
+    "autoHideEditProperties": true,
+    "clearColor": [
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "enableConfirmPopup": true,
+    "gravity": [
+      0.0,
+      -98.0
+    ],
+    "jointLineColor": [
+      1.0,
+      0.8600000143051147,
+      0.3100000023841858,
+      1.0
+    ],
+    "jointLineThickness": 2.0,
+    "kineticFrictionCoeff": 0.800000011920929,
+    "rootColor": [
+      1.0,
+      1.0,
+      1.0,
+      1.0
+    ],
+    "running": false,
+    "slipSpeedThreshold": 0.5,
+    "staticFrictionCoeff": 1.2000000476837158,
+    "viewCenter": [
+      -68.16665649414063,
+      9.916665077209473
+    ],
+    "viewScale": 1.2000000476837158,
+    "windowScale": 1.2999999523162842
+  },
+  "joints": [
+    {
+      "aId": 2,
+      "anchorA": [
+        0.0,
+        0.0
+      ],
+      "anchorB": [
+        0.0,
+        0.0
+      ],
+      "bId": 3,
+      "damping": 0.0,
+      "distance": 190.0,
+      "id": 3,
+      "stiffness": 60.0,
+      "type": 2
+    }
+  ],
+  "objects": [
+    {
+      "angularVelocity": 0.0,
+      "bodyType": 2,
+      "color": [
+        1.0,
+        0.5386996865272522,
+        0.0,
+        1.0
+      ],
+      "enabled": true,
+      "friction": 0.20000000298023224,
+      "hasPhysicBody": true,
+      "id": 2,
+      "isDescriptionComponent": false,
+      "name": "box",
+      "parentId": 0,
+      "physicMass": 1.0,
+      "physicSize1": 1.0,
+      "physicSize2": 1.0,
+      "position": [
+        0.0,
+        200.0
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.20000000298023224,
+      "rotation": 0.0,
+      "scale": [
+        50.0,
+        50.0
+      ],
+      "shapeType": 1,
+      "templateName": "box",
+      "textureSlot": -1,
+      "velocity": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "angularVelocity": 0.0,
+      "bodyType": 0,
+      "color": [
+        1.0,
+        1.0,
+        1.0,
+        0.0
+      ],
+      "enabled": true,
+      "friction": 0.20000000298023224,
+      "hasPhysicBody": true,
+      "id": 3,
+      "isDescriptionComponent": false,
+      "name": "circle",
+      "parentId": 0,
+      "physicMass": 1.0,
+      "physicSize1": 0.4000000059604645,
+      "physicSize2": 0.0,
+      "position": [
+        0.0,
+        0.0
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.20000000298023224,
+      "rotation": 0.0,
+      "scale": [
+        50.0,
+        50.0
+      ],
+      "shapeType": 0,
+      "templateName": "circle",
+      "textureSlot": 2,
+      "velocity": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "color": [
+        0.15000000596046448,
+        0.18000000715255737,
+        0.23999999463558197,
+        0.8500000238418579
+      ],
+      "descriptionFontSize": 16.0,
+      "descriptionLineSpacing": 2.0,
+      "descriptionOffset": [
+        -93.33332824707031,
+        3.3333358764648438
+      ],
+      "descriptionShowParamName": false,
+      "descriptionShowParamPhysAngularVelocity": false,
+      "descriptionShowParamPhysFriction": false,
+      "descriptionShowParamPhysMass": true,
+      "descriptionShowParamPhysRestitution": false,
+      "descriptionShowParamPhysVelocity": false,
+      "descriptionShowParamPosition": false,
+      "descriptionShowParamRotation": false,
+      "descriptionShowParamScale": false,
+      "descriptionShowParams": false,
+      "descriptionText": "弹簧原长90",
+      "enabled": true,
+      "friction": 0.0,
+      "hasPhysicBody": false,
+      "id": 4,
+      "isDescriptionComponent": true,
+      "name": "Description",
+      "parentId": 3,
+      "physicMass": 0.0,
+      "physicSize1": 0.0,
+      "physicSize2": 0.0,
+      "position": [
+        -93.33332824707031,
+        3.3333358764648438
+      ],
+      "relativePos": [
+        0.0,
+        0.0
+      ],
+      "relativeScale": [
+        1.0,
+        1.0
+      ],
+      "restitution": 0.0,
+      "rotation": 0.0,
+      "scale": [
+        2.4000000953674316,
+        0.8333332538604736
+      ],
+      "shapeType": 1,
+      "templateName": "Description",
+      "textureSlot": -1
+    }
+  ]
+}

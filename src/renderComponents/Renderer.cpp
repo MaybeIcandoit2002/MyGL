@@ -113,6 +113,13 @@ void Renderer::Draw(uint32_t offset, uint32_t indexCount, uint32_t instanceCount
     IBO->Bind();
     // 绑定着色器程序
     shader->Bind();
+
+    // 每帧绘制前重新绑定纹理槽，避免被其他渲染流程（如 ImGui）覆盖
+    for (uint32_t i = 0; i < textures.size(); ++i)
+    {
+        textures[i].Bind(i);
+    }
+
     GLCall(glDrawElementsInstanced(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, (const void*)(offset), instanceCount));
 }
 

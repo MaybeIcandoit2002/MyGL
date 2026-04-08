@@ -2,14 +2,19 @@
 
 Sources* Sources::instance = nullptr;
 
-void Sources::LoadImages(const std::string imagePath, Renderer* renderer) {
+void Sources::LoadImages(const std::string& imagePath, Renderer* renderer) {
     if (Instance()->HasImage(imagePath)) return;
     ImageProperty* imgProp = Instance()->GetImage(imagePath);
+    stbi_set_flip_vertically_on_load(1);
     unsigned char* localBuffer = stbi_load(imagePath.c_str(), &imgProp->width, &imgProp->height, &imgProp->BPP, 4);
     if (!localBuffer) {
-        throw std::runtime_error("Failed to load texture: " + imagePath);
+        imgProp->slot = UINT16_MAX;
+        imgProp->width = 0;
+        imgProp->height = 0;
+        imgProp->BPP = 0;
+        return;
     }
-    renderer->AddTexture(localBuffer, imgProp->width, imgProp->height);
+    imgProp->slot = renderer->AddTexture(localBuffer, imgProp->width, imgProp->height);
     stbi_image_free(localBuffer);
 }
 void Sources::LoadMeshsFromJson(const std::string& filename, Renderer* renderer) {
@@ -34,6 +39,56 @@ void Sources::LoadMeshsFromJson(const std::string& filename, Renderer* renderer)
             indicesTemp != nullptr && !indicesTemp->empty()) {
             mesh->renderID = renderer->AddData(vertexsTemp->data(), vertexsTemp->size(), indicesTemp->data(), indicesTemp->size());
         }
+    }
+}
+
+void Sources::LoadComponentFromJson(const std::string& filename)
+{
+    componentTemplates.clear();
+    std::ifstream in(filename);
+    if (!in) return;
+    nlohmann::json meshsJson;
+    in >> meshsJson;
+    for (auto& meshPair : meshsJson.items())
+    {
+        const std::string& meshName = meshPair.key();
+        const nlohmann::json& member = meshPair.value();
+
+        ShapeType s = ShapeType::Box;
+        if (member["shape"] == "circle") s = ShapeType::Circle;
+        else if (member["shape"] == "polygon") s = ShapeType::Polygon;
+
+        auto* size2 = new std::vector<float>();
+        for (int i = 1; i < member["collider"].size(); i++)
+        {
+			size2->push_back(member["collider"][i].get<float>());
+        }
+
+        int slot = -1;
+        if (member.find("slot") != member.end() && member["slot"].is_string())
+        {
+            const std::string imageKey = member["slot"].get<std::string>();
+            if (!imageKey.empty() && HasImage(imageKey))
+            {
+                const uint16_t imageSlot = GetImage(imageKey)->slot;
+                slot = (imageSlot == UINT16_MAX) ? -1 : static_cast<int>(imageSlot);
+            }
+        }
+
+        componentTemplates.push_back({
+            meshPair.key(),
+			member["mesh"].get<std::string>(),
+			member["size"][0].get<float>(),
+            member["size"][1].get<float>(),
+			utils::Parsef4(member["color"])->data(),
+			slot,
+            s,
+			member["collider"][0].get<float>(),
+            size2->data(),
+            member["mass"].get<float>(),
+			member["friction"].get<float>(),
+			member["restitution"].get<float>()
+        });
     }
 }
 
@@ -72,7 +127,7 @@ namespace utils
             vert.position = glm::vec2(v[0].get<float>(), v[1].get<float>());
             vert.color = glm::vec4(v[2].get<float>(), v[3].get<float>(), v[4].get<float>(), v[5].get<float>());
             vert.uv = glm::vec2(v[6].get<float>(), v[7].get<float>());
-            vert.textureID = v[8].get<float>();
+            vert.textureID = -1.0f;
             result->push_back(std::move(vert));
         }
         return result;

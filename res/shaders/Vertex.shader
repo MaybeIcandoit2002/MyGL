@@ -18,18 +18,22 @@ uniform mat4 u_view;
 
 mat3 u_positionTransform() {
 	return mat3(
-		u_data[gl_InstanceID * 5 + 0].xyz,
-		u_data[gl_InstanceID * 5 + 1].xyz,
-		u_data[gl_InstanceID * 5 + 2].xyz
+		u_data[gl_InstanceID * 6 + 0].xyz,
+		u_data[gl_InstanceID * 6 + 1].xyz,
+		u_data[gl_InstanceID * 6 + 2].xyz
 	);
 }
 
 vec4 u_Color() {
-	return u_data[gl_InstanceID * 5 + 3];
+	return u_data[gl_InstanceID * 6 + 3];
 }
 
 vec2 u_uvTransform() {
-	return u_data[gl_InstanceID * 5 + 4].xy;
+	return u_data[gl_InstanceID * 6 + 4].xy;
+}
+
+float u_texIndex() {
+	return u_data[gl_InstanceID * 6 + 5].x;
 }
 
 void main()
@@ -37,5 +41,5 @@ void main()
 	gl_Position = u_proj * u_view * vec4((u_positionTransform() * vec3(in_position.xy, 1.0)).xy, 0.0, 1.0);
 	v_Color = mix(in_backgroundColor, u_Color(), u_Color().a);
 	v_texCoord = u_uvTransform() + in_texCoord;
-	v_TexIndex = in_TexIndex;
+	v_TexIndex = u_texIndex();
 }
